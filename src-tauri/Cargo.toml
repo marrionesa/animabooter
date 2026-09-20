@@ -1,0 +1,63 @@
+[package]
+name = "animabooter"
+version = "0.1.0-alpha"
+description = "Flash USB drives with soul — a tiny, honest, cross-platform USB imager"
+authors = ["marrionesa"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "animabooter_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-notification = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+flate2 = "1"
+xz2 = "0.1"
+zstd = "0.13"
+bzip2 = "0.4"
+blake3 = "1"
+sha2 = "0.10"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+udev = "0.9"
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+plist = "1"
+
+# NOTE on features: besides the ones required by the spec, three extra
+# windows-rs features are enabled because the implementation needs them:
+#   - Win32_Security            -> GetTokenInformation / OpenProcessToken (elevation check)
+#   - Win32_System_Threading    -> GetCurrentProcess
+#   - Win32_System_Ioctl        -> IOCTL_DISK_GET_DRIVE_GEOMETRY (sector size)
+# Nothing from the required stack was substituted or removed.
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.58", features = [
+  "Win32_Storage_FileSystem",
+  "Win32_Storage",
+  "Win32_System_IO",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_Devices_DeviceAndDriverInstallation",
+  "Win32_Security",
+  "Win32_System_Threading",
+  "Win32_System_Ioctl",
+] }
+
+[profile.release]
+# Small installer (<10 MB) and fast startup (<0.5 s) are product goals.
+opt-level = "z"
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"

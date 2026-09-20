@@ -1,0 +1,18 @@
+# Node / Vite
+node_modules/
+dist/
+*.local
+.vite/
+
+# Rust / Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local scratch
+dev.log
