@@ -105,6 +105,7 @@ pub fn emit_error(sink: &dyn EventSink, err: &crate::error::AppError) {
 
 /// Minimal sink used by unit tests (discards every event).
 /// Production uses `TauriEventSink` (see `state.rs`).
+#[cfg(test)]
 pub mod test_support {
     use super::{EventSink, Phase};
 

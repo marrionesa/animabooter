@@ -441,10 +441,6 @@ impl BlockWriter for WindowsWriter {
     fn sync(&mut self) -> io::Result<()> {
         self.file.sync_all()
     }
-
-    fn sector_size(&self) -> u64 {
-        self.sector as u64
-    }
 }
 
 pub struct WindowsReader {

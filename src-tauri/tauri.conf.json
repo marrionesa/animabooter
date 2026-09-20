@@ -14,9 +14,9 @@
       {
         "title": "AnimaBooter — Flash USB drives with soul",
         "width": 860,
-        "height": 600,
+        "height": 640,
         "minWidth": 780,
-        "minHeight": 560,
+        "minHeight": 640,
         "resizable": true,
         "center": true
       }
@@ -29,9 +29,9 @@
     "active": true,
     "targets": "all",
     "publisher": "marrionesa",
-    "copyright": "(c) 2025 marrionesa — MIT",
+    "copyright": "(c) 2026 marrionesa — MIT",
     "category": "Utility",
-    "shortDescription": "Flash USB drives with soul",
+    "shortDescription": "Flash USB drives easy and safely",
     "longDescription": "AnimaBooter is a tiny, honest, cross-platform USB imager with a parallel 3-stage pipeline, free verification hashing and destructive-safety features. No telemetry, no cloud, no accounts.",
     "icon": [
       "icons/32x32.png",

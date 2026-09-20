@@ -54,9 +54,10 @@ pub fn detect_prefix(prefix: &[u8]) -> Detection {
     // fields: volume identifier (0x8028), system identifier (0x8008) and
     // publisher (0x8384). We only warn — never block.
     let is_windows_iso = kind == ImageKind::Raw
-        && prefix.len() > 0x8404
+        && prefix.len() >= 0x8404
         && &prefix[0x8001..0x8006] == b"CD001"
         && (ascii_contains(&prefix[0x8028..0x8048], b"WINDOWS")
+            || ascii_contains(&prefix[0x8028..0x8048], b"CCCOMA")
             || ascii_contains(&prefix[0x8008..0x8028], b"WIN32")
             || ascii_contains(&prefix[0x8384..0x8404], b"MICROSOFT"));
 

@@ -7,10 +7,11 @@
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { fade } from "svelte/transition";
-  import { Languages, Palette, Shield, ShieldAlert } from "lucide-svelte";
+  import { CircleHelp, Languages, Palette, Settings as SettingsIcon, Shield, ShieldAlert } from "lucide-svelte";
   import Mascot from "./components/Mascot.svelte";
   import Wizard from "./components/Wizard.svelte";
   import ConfirmModal from "./components/ConfirmModal.svelte";
+  import OverlayDialog from "./components/OverlayDialog.svelte";
   import { getSettings, onDone, onError, onLog, onPhase, onProgress, onVerify, setSettings, toErrorData } from "./lib/ipc";
   import {
     applyTheme,
@@ -33,6 +34,11 @@
   let unsafeOpen = $state(false);
   let unsafeStage = $state(0);
   let settingsReady = $state(false);
+  let settingsOpen = $state(false);
+  let helpOpen = $state(false);
+
+  const REPOSITORY_URL = "https://github.com/marrionesa/animabooter";
+  const AUTHOR_URL = "https://github.com/marrionesa";
 
   onMount(() => {
     const unlisteners: Array<() => void> = [];
@@ -137,7 +143,13 @@
     unsafeStage = 0;
     void persist({ ...$settings, unsafe_mode: true });
   }
+
+  function preventContextMenu(event: MouseEvent): void {
+    event.preventDefault();
+  }
 </script>
+
+<svelte:window oncontextmenu={preventContextMenu} />
 
 <div class="flex min-h-screen flex-col bg-bg text-txt">
   <header class="sticky top-0 z-40 border-b border-edge bg-bg/85 backdrop-blur">
@@ -145,46 +157,29 @@
       <div class="flex items-center gap-3">
         <Mascot state={$flashStatus === "running" ? "writing" : "idle"} size={44} />
         <div class="leading-tight">
-          <p class="font-bold tracking-tight text-txt">{$t("app.name")}</p>
+          <p class="font-bold tracking-tight text-txt"><a class="transition-colors hover:text-accent" href={REPOSITORY_URL} target="_blank" rel="noreferrer">{$t("app.name")}</a></p>
           <p class="text-[11px] text-muted">{$t("app.tagline")}</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5" role="toolbar" aria-label="{$t('settings.theme')} / {$t('settings.language')}">
+      <div class="flex items-center gap-1.5" role="toolbar" aria-label={$t("app.toolbar")}>
         <button
           type="button"
           class="grid min-h-11 min-w-11 place-items-center rounded-xl border border-edge bg-surface text-muted transition-colors hover:border-accent/50 hover:text-txt"
-          onclick={cycleTheme}
-          title="{$t('settings.theme')}: {themeLabel($settings.theme)}"
-          aria-label="{$t('settings.theme')}: {themeLabel($settings.theme)}"
+          onclick={() => (settingsOpen = true)}
+          title={$t("settings.title")}
+          aria-label={$t("settings.title")}
         >
-          <Palette size={18} aria-hidden="true" />
+          <SettingsIcon size={19} aria-hidden="true" />
         </button>
         <button
           type="button"
-          class="grid min-h-11 min-w-11 place-items-center rounded-xl border border-edge bg-surface font-mono text-xs font-bold uppercase text-muted transition-colors hover:border-accent/50 hover:text-txt"
-          onclick={cycleLang}
-          title="{$t('settings.language')}: {$lang.toUpperCase()}"
-          aria-label="{$t('settings.language')}: {$lang.toUpperCase()}"
+          class="grid min-h-11 min-w-11 place-items-center rounded-xl border border-edge bg-surface text-muted transition-colors hover:border-accent/50 hover:text-txt"
+          onclick={() => (helpOpen = true)}
+          title={$t("help.title")}
+          aria-label={$t("help.title")}
         >
-          <span class="flex items-center gap-1"><Languages size={14} aria-hidden="true" />{$lang}</span>
-        </button>
-        <button
-          type="button"
-          class="grid min-h-11 min-w-11 place-items-center rounded-xl border transition-colors
-            {$settings.unsafe_mode
-              ? 'border-error/60 bg-error/15 text-error'
-              : 'border-edge bg-surface text-muted hover:border-accent/50 hover:text-txt'}"
-          onclick={requestUnsafeToggle}
-          title={$settings.unsafe_mode ? $t("settings.unsafe.on") : $t("settings.unsafe.off")}
-          aria-pressed={$settings.unsafe_mode}
-          aria-label={$settings.unsafe_mode ? $t("settings.unsafe.on") : $t("settings.unsafe.off")}
-        >
-          {#if $settings.unsafe_mode}
-            <ShieldAlert size={18} aria-hidden="true" />
-          {:else}
-            <Shield size={18} aria-hidden="true" />
-          {/if}
+          <CircleHelp size={20} aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -195,9 +190,118 @@
   </main>
 
   <footer class="mt-auto border-t border-edge px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-center">
-    <p class="font-mono text-[11px] text-muted">{$t("app.version")}</p>
+    <p class="font-mono text-[11px] text-muted">
+      <a class="transition-colors hover:text-accent" href={REPOSITORY_URL} target="_blank" rel="noreferrer">{$t("app.name")}</a>
+      <span> · {$t("app.version")} · {$t("app.createdBy")} </span>
+      <a class="transition-colors hover:text-accent" href={AUTHOR_URL} target="_blank" rel="noreferrer">marrionesa</a>
+      <span> · {$t("app.openSource")}</span>
+    </p>
   </footer>
 </div>
+
+<OverlayDialog
+  open={settingsOpen}
+  title={$t("settings.title")}
+  closeLabel={$t("common.close")}
+  onclose={() => (settingsOpen = false)}
+>
+  <div class="mt-5 space-y-3">
+    <section class="rounded-xl border border-edge bg-bg/45 p-4">
+      <div class="flex items-center gap-2 text-sm font-medium text-txt">
+        <Palette size={17} class="text-accent" aria-hidden="true" />
+        {$t("settings.theme")}
+      </div>
+      <div class="mt-3 flex items-center justify-between gap-3">
+        <p class="text-sm text-muted">{themeLabel($settings.theme)}</p>
+        <button
+          type="button"
+          class="min-h-10 rounded-xl border border-edge bg-surface px-3 text-sm font-medium text-txt transition-colors hover:border-accent/50"
+          onclick={cycleTheme}
+          aria-label="{$t('settings.changeTheme')}: {themeLabel($settings.theme)}"
+        >
+          {$t("settings.change")}
+        </button>
+      </div>
+    </section>
+
+    <section class="rounded-xl border border-edge bg-bg/45 p-4">
+      <div class="flex items-center gap-2 text-sm font-medium text-txt">
+        <Languages size={17} class="text-accent" aria-hidden="true" />
+        {$t("settings.language")}
+      </div>
+      <div class="mt-3 flex items-center justify-between gap-3">
+        <p class="text-sm text-muted">{$lang === "es" ? "Español" : "English"}</p>
+        <button
+          type="button"
+          class="min-h-10 rounded-xl border border-edge bg-surface px-3 text-sm font-medium text-txt transition-colors hover:border-accent/50"
+          onclick={cycleLang}
+          aria-label="{$t('settings.changeLanguage')}: {$lang.toUpperCase()}"
+        >
+          {$t("settings.change")}
+        </button>
+      </div>
+    </section>
+
+    <section class="rounded-xl border border-edge bg-bg/45 p-4">
+      <div class="flex items-center gap-2 text-sm font-medium text-txt">
+        {#if $settings.unsafe_mode}
+          <ShieldAlert size={17} class="text-error" aria-hidden="true" />
+        {:else}
+          <Shield size={17} class="text-accent" aria-hidden="true" />
+        {/if}
+        {$t("settings.unsafe.titleShort")}
+      </div>
+      <div class="mt-3 flex items-center justify-between gap-3">
+        <p class="text-sm text-muted">{$settings.unsafe_mode ? $t("settings.unsafe.on") : $t("settings.unsafe.off")}</p>
+        <button
+          type="button"
+          class="min-h-10 rounded-xl border px-3 text-sm font-medium transition-colors
+            {$settings.unsafe_mode
+              ? 'border-error/50 bg-error/10 text-error hover:bg-error/20'
+              : 'border-edge bg-surface text-txt hover:border-accent/50'}"
+          onclick={requestUnsafeToggle}
+          aria-pressed={$settings.unsafe_mode}
+        >
+          {$settings.unsafe_mode ? $t("settings.unsafe.disable") : $t("settings.unsafe.enable")}
+        </button>
+      </div>
+    </section>
+  </div>
+</OverlayDialog>
+
+<OverlayDialog
+  open={helpOpen}
+  title={$t("help.title")}
+  closeLabel={$t("common.close")}
+  onclose={() => (helpOpen = false)}
+>
+  <div class="mt-5 space-y-5 text-sm">
+    <section>
+      <h3 class="font-medium text-txt">{$t("help.how.title")}</h3>
+      <ol class="mt-2 space-y-2 text-muted">
+        <li><span class="mr-2 font-mono text-accent">01</span>{$t("help.how.image")}</li>
+        <li><span class="mr-2 font-mono text-accent">02</span>{$t("help.how.drive")}</li>
+        <li><span class="mr-2 font-mono text-accent">03</span>{$t("help.how.flash")}</li>
+      </ol>
+    </section>
+
+    <section class="rounded-xl border border-edge bg-bg/45 p-4">
+      <h3 class="font-medium text-txt">{$t("help.safety.title")}</h3>
+      <p class="mt-1.5 leading-relaxed text-muted">{$t("help.safety.body")}</p>
+    </section>
+
+    <section class="border-t border-edge pt-4">
+      <h3 class="font-medium text-txt">{$t("help.about.title")}</h3>
+      <p class="mt-1.5 leading-relaxed text-muted">
+        <a class="text-accent underline-offset-2 hover:underline" href={REPOSITORY_URL} target="_blank" rel="noreferrer">{$t("app.name")}</a>
+        {$t("help.about.body")}
+        <a class="text-accent underline-offset-2 hover:underline" href={AUTHOR_URL} target="_blank" rel="noreferrer">marrionesa</a>.
+        {$t("help.about.license")}
+      </p>
+      <p class="mt-2 font-mono text-xs text-accent">{$t("app.version")}</p>
+    </section>
+  </div>
+</OverlayDialog>
 
 {#if $toast}
   <div

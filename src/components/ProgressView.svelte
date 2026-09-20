@@ -126,6 +126,12 @@
       ></div>
     </div>
 
+    {#if $currentPhase === "finalizing" && $flashStatus === "running"}
+      <p class="mt-3 rounded-xl border border-warning/40 bg-warning/10 p-2.5 text-center text-xs font-medium text-warning" role="status">
+        {$t("progress.finalizingHint")}
+      </p>
+    {/if}
+
     <!-- verify bar -->
     {#if $verifyProgress && ($currentPhase === "verifying" || $currentPhase === "finalizing")}
       <div class="mt-3" in:fade>

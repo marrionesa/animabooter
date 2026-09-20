@@ -1,25 +1,28 @@
-# AnimaBooter
+# [AnimaBooter](https://github.com/marrionesa/animabooter)
 
 **Flash USB drives with soul** · *Flashea tu USB con alma*
 
-A tiny, honest, cross-platform USB image flasher — the small footprint of
+A tiny, honest, open-source, cross-platform USB image flasher created by
+[@marrionesa](https://github.com/marrionesa) — the small footprint of
 usbimager, the UX polish of Etcher, and a technical edge that neither has:
 a **parallel 3-stage flash pipeline** with **free verification hashing**.
 
 - Backend: **Rust** (Tauri 2, tokio)
 - Frontend: **Svelte 5 + TypeScript + Tailwind CSS v4**
 - Platforms: **Windows / macOS / Linux**
-- License: **MIT** (c) 2025 marrionesa
+- Project: [github.com/marrionesa/animabooter](https://github.com/marrionesa/animabooter)
+- Creator: [marrionesa](https://github.com/marrionesa)
+- License: **MIT** (c) 2026 [marrionesa](https://github.com/marrionesa)
 - Privacy: **100% local** — no telemetry, no cloud, no accounts, no network
   calls at runtime. Ever.
 
 ---
 
-## Why AnimaBooter
+## Why [AnimaBooter](https://github.com/marrionesa/animabooter)
 
 Etcher is sequential: it reads, writes and verifies in a queue, and
 verification re-reads, re-decompresses and re-hashes everything.
-AnimaBooter overlaps all of it:
+[AnimaBooter](https://github.com/marrionesa/animabooter) overlaps all of it:
 
 ```text
 [Reader] ──4 MiB blocks──► [Writer] ──write spans──► [Verifier]
@@ -46,7 +49,7 @@ Honesty guarantees:
 
 ### Comparison
 
-| Metric | balenaEtcher | Rufus | usbimager | AnimaBooter |
+| Metric | balenaEtcher | Rufus | usbimager | [AnimaBooter](https://github.com/marrionesa/animabooter) |
 | --- | --- | --- | --- | --- |
 | Platforms | Win/macOS/Linux | Windows only | Win/macOS/Linux | Win/macOS/Linux |
 | Install size | ~300 MB | ~25 MB | ~2 MB | **< 10 MB (target)** |
@@ -55,7 +58,7 @@ Honesty guarantees:
 | UI | Electron | Win32 | minimal | Svelte 5 wizard + reactive mascot |
 | Telemetry | yes | no | no | **NONE — offline by design** |
 
-> Benchmark cells for AnimaBooter are **targets**, not claims. We publish
+> Benchmark cells for [AnimaBooter](https://github.com/marrionesa/animabooter) are **targets**, not claims. We publish
 > only real, self-measured numbers — measure yourself and fill in your own
 > results (`cargo test && cargo tauri build`, then time a real flash on real
 > hardware). Same image, same drive, same port.
@@ -177,20 +180,22 @@ contract.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Made with soul by **@marrionesa**.
+MIT — see [LICENSE](LICENSE). Open source software made with soul by [marrionesa](https://github.com/marrionesa). Source: [github.com/marrionesa/animabooter](https://github.com/marrionesa/animabooter).
 
 ---
 
-# AnimaBooter (ES)
+# [AnimaBooter](https://github.com/marrionesa/animabooter) (ES)
 
 **Flashea tu USB con alma**
 
-Un flasheador de imágenes USB pequeño, honesto y multiplataforma. Lo pequeño
+Un flasheador de imágenes USB pequeño, honesto, de código abierto y multiplataforma, creado por [marrionesa](https://github.com/marrionesa). Lo pequeño
 de usbimager, la UX de Etcher y una ventaja técnica que ninguno tiene: un
 **pipeline paralelo de 3 etapas** con **hash de verificación gratis**.
 
 - Backend **Rust** (Tauri 2, tokio) · Frontend **Svelte 5 + Tailwind v4**
-- Plataformas: **Windows / macOS / Linux** · Licencia **MIT** (c) 2025 marrionesa
+- Proyecto: [github.com/marrionesa/animabooter](https://github.com/marrionesa/animabooter)
+- Creador: [marrionesa](https://github.com/marrionesa)
+- Plataformas: **Windows / macOS / Linux** · Licencia **MIT** (c) 2026 [marrionesa](https://github.com/marrionesa)
 - Privacidad: **100% local** — sin telemetría, sin nube, sin cuentas, sin
   llamadas de red en ejecución. Nunca.
 
@@ -252,4 +257,4 @@ Permisos en Linux: ejecuta con `sudo` o instala la regla udev de arriba
 
 ## Licencia
 
-MIT — ver [LICENSE](LICENSE). Hecho con alma por **@marrionesa**.
+MIT — ver [LICENSE](LICENSE). Software de código abierto hecho con alma por [marrionesa](https://github.com/marrionesa). Código fuente: [github.com/marrionesa/animabooter](https://github.com/marrionesa/animabooter).

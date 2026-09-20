@@ -24,8 +24,6 @@
     verifyEnabled,
   } from "../lib/stores";
 
-  let showConfirm = $state(false);
-
   const stepKeys = ["steps.image", "steps.drive", "steps.confirm", "steps.write"] as const;
   const stepValue = $derived<number>(
     $step === "image" ? 0 : $step === "drive" ? 1 : $step === "confirm" ? 2 : 3
@@ -38,8 +36,8 @@
       cancelPrompt.set(true);
       return;
     }
-    if (showConfirm) {
-      showConfirm = false;
+    if ($step === "confirm") {
+      step.set("drive");
       return;
     }
     if ($step === "drive") {
@@ -58,7 +56,6 @@
   }
 
   async function startFlash(): Promise<void> {
-    showConfirm = false;
     await startFlashAndRun();
   }
 </script>
@@ -116,15 +113,12 @@
 {/key}
 
 <ConfirmModal
-  open={showConfirm}
+  open={$step === "confirm"}
   title={$t("confirm.title")}
   body={$t("confirm.subtitle")}
   confirmLabel={$t("confirm.hold")}
   onconfirm={startFlash}
-  oncancel={() => {
-    showConfirm = false;
-    step.set("drive");
-  }}
+  oncancel={() => step.set("drive")}
 >
   {#snippet children()}
     <dl class="mt-4 space-y-2 rounded-xl border border-edge bg-terminal p-4 font-mono text-xs">

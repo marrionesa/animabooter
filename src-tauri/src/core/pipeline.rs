@@ -98,11 +98,22 @@ fn open_source(
     spec: &SourceSpec,
 ) -> Result<(Box<dyn Read + Send>, ImageKind, Option<u64>), AppError> {
     match spec {
-        SourceSpec::Bytes(bytes, kind) => Ok((
-            Box::new(std::io::Cursor::new(bytes.clone())) as Box<dyn Read + Send>,
-            *kind,
-            Some(bytes.len() as u64),
-        )),
+        SourceSpec::Bytes(bytes, kind) => {
+            // In-memory sources (tests, IPC-uploaded images) go through the
+            // SAME decompression path as files, so a Gzip/Xz/Zstd payload is
+            // never written compressed. Unknown decompressed size: honest
+            // counters, no fake percent.
+            let reader = decompress::wrap(
+                Box::new(std::io::Cursor::new(bytes.clone())) as Box<dyn Read + Send>,
+                *kind,
+            )?;
+            let estimated = if *kind == ImageKind::Raw {
+                Some(bytes.len() as u64) // exact: the buffer IS the payload
+            } else {
+                None // unknown decompressed size — honest counters, no fake percent
+            };
+            Ok((reader, *kind, estimated))
+        }
         SourceSpec::File(path) => {
             let detection = detect_file(path)?;
             let compressed_size = std::fs::metadata(path).map(|m| m.len()).ok();
@@ -144,7 +155,9 @@ fn join_worker<T>(
     stage: &'static str,
 ) -> Result<T, AppError> {
     if handle.join().is_err() {
-        return Err(AppError::platform(format!("{stage} thread crashed (panic)")));
+        return Err(AppError::platform(format!(
+            "{stage} thread crashed (panic)"
+        )));
     }
     rx.recv()
         .map_err(|_| AppError::platform(format!("{stage} thread died without reporting")))
@@ -328,13 +341,30 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
                         return Err(AppError::Cancelled);
                     }
                     // HONEST FLUSH: never report success before this succeeds.
+                    // The page cache accepted the blocks at RAM speed; from
+                    // here until sync_all returns they are physically hitting
+                    // the medium, which on slow USB drives takes minutes and
+                    // gives the kernel nothing to report — switch to the
+                    // finalizing phase and say so, or the UI reads as hung.
+                    sink.phase(Phase::Finalizing);
                     sink.log(
-                        "write: flushing OS buffers to the physical device (sync_all)".to_string(),
+                        "write: flushing OS buffers to the physical device (sync_all) — on slow \
+                         drives this can take several minutes"
+                            .to_string(),
                     );
                     writer.sync().map_err(|e| AppError::Device {
                         message: format!("final flush (sync_all) failed: {e}"),
                         hint: Some(HINT_UNKNOWN_STATE.to_string()),
                     })?;
+                    if cancel.is_cancelled() {
+                        // The flush completed, so the data IS on the medium —
+                        // cancelling here cannot unwrite it; finish honestly.
+                        sink.log(
+                            "cancel: requested during the final flush — the write had already \
+                             finished, letting it complete"
+                                .to_string(),
+                        );
+                    }
                     let elapsed = start_writer.elapsed().as_secs_f64();
                     sink.progress(&ProgressPayload {
                         written,
@@ -387,6 +417,13 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
         Some(handle) => Some(join_worker(handle, ver_rx, "verifier")),
         None => None,
     };
+
+    // Each worker sends a Result over its channel, and join_worker wraps that
+    // in another Result for thread-crash/early-death cases — flatten the two
+    // layers so the precedence checks below see the real per-stage errors.
+    let reader_result = reader_result.and_then(|inner| inner);
+    let writer_result = writer_result.and_then(|inner| inner);
+    let verifier_result = verifier_result.map(|inner| inner.and_then(|v| v));
 
     // Error precedence: writer > verifier > reader (writer describes the
     // state of the DEVICE, which is what the user must fix).
@@ -544,7 +581,8 @@ mod tests {
         let mut enc = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
         enc.write_all(&original).unwrap();
         let compressed = enc.finish().unwrap();
-        assert!(compressed.len() < original.len());
+        // The LCG pattern is near-incompressible, so gzip may well GROW it;
+        // what matters here is that the roundtrip still decompresses exactly.
 
         let dev = MemoryDevice::new();
         let res = run(
@@ -682,7 +720,7 @@ mod tests {
         let sink = Arc::new(CountingSink {
             percents: std::sync::Mutex::new(Vec::new()),
         });
-        let sink_dyn: Arc<dyn EventSink> = Arc::clone(&sink);
+        let sink_dyn: Arc<dyn EventSink> = sink.clone();
         let res = run(
             mem_job(data, ImageKind::Raw, true, CancelToken::new(), &dev),
             sink_dyn,

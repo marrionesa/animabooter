@@ -76,12 +76,10 @@ export async function restartAsAdmin(): Promise<void> {
 // Events — every function returns its own unlisten handle.
 // ---------------------------------------------------------------------------
 
-interface PhasePayload {
-  phase: Phase;
-}
-
 export function onPhase(cb: (phase: Phase) => void): Promise<UnlistenFn> {
-  return listen<PhasePayload>("flash://phase", (e) => cb(e.payload.phase));
+  // The backend emits the Phase enum directly as a JSON string
+  // ("writing" | "verifying" | "finalizing" | "done"), not a wrapped object.
+  return listen<Phase>("flash://phase", (e) => cb(e.payload));
 }
 
 export function onProgress(cb: (p: ProgressData) => void): Promise<UnlistenFn> {

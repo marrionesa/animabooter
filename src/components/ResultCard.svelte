@@ -23,6 +23,9 @@
   let ejecting = $state(false);
   let ejected = $state(false);
 
+  const REPOSITORY_URL = "https://github.com/marrionesa/animabooter";
+  const AUTHOR_URL = "https://github.com/marrionesa";
+
   const ASCII = [
     "      ╭──────╮",
     "     ╱  ◕  ◕  ╲",
@@ -50,7 +53,9 @@
         : tt("result.unverified"),
       `${tt("result.when")}: ${timestampLabel()}`,
       r.verified ? tt("result.zeroCorrupt") : "",
-      "animabooter v0.1 · made by @marrionesa",
+      "AnimaBooter v0.1 · open source · 2026",
+      `Repository: ${REPOSITORY_URL}`,
+      `Created by marrionesa: ${AUTHOR_URL}`,
     ].filter(Boolean);
     try {
       await navigator.clipboard.writeText(lines.join("\n"));
@@ -126,7 +131,7 @@
     // footer
     ctx.fillStyle = "#9ca3af";
     ctx.font = "12px 'JetBrains Mono', monospace";
-    ctx.fillText("animabooter v0.1 · made by @marrionesa", 260, H - 24);
+    ctx.fillText("animabooter v0.1 · open source · 2026", 260, H - 24);
 
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) {
@@ -177,7 +182,7 @@
         <Mascot state="done" size={128} />
       </div>
       <div class="terminal p-5 leading-relaxed">
-        <p class="font-bold text-accent">animabooter@usb</p>
+        <p class="font-bold text-accent"><a href={REPOSITORY_URL} target="_blank" rel="noreferrer" class="hover:underline">animabooter@usb</a></p>
         <p class="mb-2 text-edge">─────────────</p>
         <p><span class="text-muted">{$t("result.image")}:</span> <span class="text-txt">{$selectedImage?.name ?? "?"}</span></p>
         <p><span class="text-muted">{$t("result.size")}:</span> <span class="text-txt">{formatBytes($result?.total_bytes)}</span></p>

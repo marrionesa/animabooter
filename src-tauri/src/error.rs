@@ -152,5 +152,3 @@ impl From<serde_json::Error> for AppError {
         AppError::config(e.to_string())
     }
 }
-
-pub type AppResult<T> = Result<T, AppError>;

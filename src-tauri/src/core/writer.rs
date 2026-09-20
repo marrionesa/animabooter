@@ -6,6 +6,7 @@
 //! platform code thin.
 
 use std::io;
+#[cfg(test)]
 use std::sync::{Arc, Mutex};
 
 /// Sector-aligned writer target (physical device or memory).
@@ -18,11 +19,6 @@ pub trait BlockWriter: Send {
     /// Flush all OS-level buffers to the physical medium. The pipeline MUST
     /// call this — and it MUST succeed — before success can be reported.
     fn sync(&mut self) -> io::Result<()>;
-
-    /// Native sector size in bytes (fallback: 512).
-    fn sector_size(&self) -> u64 {
-        512
-    }
 }
 
 /// Read-back target used by the verifier. A separate handle from the writer
@@ -40,9 +36,11 @@ pub struct WriteSpan {
 
 /// In-memory device used by unit tests. NOT a stub: production targets
 /// implement the exact same traits against real device files/handles.
+#[cfg(test)]
 #[derive(Clone, Default)]
 pub struct MemoryDevice(Arc<Mutex<Vec<u8>>>);
 
+#[cfg(test)]
 impl MemoryDevice {
     pub fn new() -> Self {
         Self(Arc::new(Mutex::new(Vec::new())))
@@ -80,16 +78,19 @@ impl MemoryDevice {
     }
 }
 
+#[cfg(test)]
 pub struct MemoryWriter {
     device: MemoryDevice,
 }
 
+#[cfg(test)]
 impl MemoryWriter {
     pub fn corrupt(&self, offset: u64) {
         self.device.corrupt(offset);
     }
 }
 
+#[cfg(test)]
 impl BlockWriter for MemoryWriter {
     fn write_at(&mut self, offset: u64, data: &[u8]) -> io::Result<()> {
         let mut guard = self.device.0.lock().expect("memory device poisoned");
@@ -107,10 +108,12 @@ impl BlockWriter for MemoryWriter {
     }
 }
 
+#[cfg(test)]
 pub struct MemoryReader {
     device: MemoryDevice,
 }
 
+#[cfg(test)]
 impl BlockReader for MemoryReader {
     fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> io::Result<()> {
         let guard = self.device.0.lock().expect("memory device poisoned");

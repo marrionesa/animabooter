@@ -20,6 +20,8 @@ use crate::safety::HINT_UNKNOWN_STATE;
 /// Result of a successful verification pass.
 pub struct VerifiedOutput {
     pub blake3_hex: String,
+    /// Bytes actually re-read and hashed (asserted in tests).
+    #[cfg_attr(not(test), allow(dead_code))]
     pub checked_bytes: u64,
 }
 
@@ -124,7 +126,7 @@ fn drain_spans(spans: Receiver<WriteSpan>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::writer::{MemoryDevice, MemoryReader};
+    use crate::core::writer::MemoryDevice;
 
     fn dev_with(data: &[u8]) -> MemoryDevice {
         let dev = MemoryDevice::new();

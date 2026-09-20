@@ -2,7 +2,7 @@
 //! Tauri bridge for the tauri-free core `EventSink`.
 
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
@@ -57,7 +57,7 @@ impl AppState {
             .and_then(|bytes| serde_json::from_slice(&bytes).ok())
             .unwrap_or_default();
         Self {
-            cancel: CancelToken::default(),
+            cancel: CancelToken::new(),
             busy: AtomicBool::new(false),
             settings: std::sync::Mutex::new(settings),
             config_dir,
@@ -86,10 +86,6 @@ impl AppState {
         self.settings
             .lock()
             .map_err(|_| AppError::config("settings state lock poisoned"))
-    }
-
-    pub fn is_busy(&self) -> bool {
-        self.busy.load(Ordering::SeqCst)
     }
 }
 

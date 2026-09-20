@@ -65,6 +65,7 @@ impl SpeedTracker {
     }
 
     /// Number of retained samples (exposed for tests).
+    #[cfg(test)]
     pub fn samples(&self) -> usize {
         self.samples.len()
     }
@@ -145,15 +146,15 @@ mod tests {
         let mut tracker = SpeedTracker::new();
         tracker.sample(t0, 0);
         // 8 MiB in 1 s => 8 MiB/s
-        tracker.sample(t0 + Duration::from_secs(1), 8 * BLOCK_SIZE as u64);
+        tracker.sample(t0 + Duration::from_secs(1), (8.0 * MIB) as u64);
         // 4 MiB in the next 2 s => 2 MiB/s
-        tracker.sample(t0 + Duration::from_secs(3), 12 * BLOCK_SIZE as u64);
+        tracker.sample(t0 + Duration::from_secs(3), (12.0 * MIB) as u64);
         assert!((tracker.peak_mbs() - 8.0).abs() < 1e-9);
+        // Window spans ALL retained samples: 12 MiB over the full 3 s => 4 MiB/s.
         assert!(
-            (tracker.window_only_avg_assert_helper(
-                t0 + Duration::from_secs(3),
-                12 * BLOCK_SIZE as u64
-            ) - 2.0)
+            (tracker
+                .window_only_avg_assert_helper(t0 + Duration::from_secs(3), (12.0 * MIB) as u64)
+                - 4.0)
                 .abs()
                 < 1e-9
         );

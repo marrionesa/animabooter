@@ -1,6 +1,6 @@
 {
   "identifier": "default",
-  "description": "Default capabilities for the AnimaBooter main window: core IPC, native open dialog and desktop notifications.",
+  "description": "Default capabilities for the AnimaBooter main window: core IPC, native dialogs, notifications and approved external links.",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:default", "notification:default"]
+  "permissions": ["core:default", "dialog:default", "notification:default", "opener:default"]
 }
