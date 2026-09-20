@@ -22,7 +22,11 @@ pub struct SpeedTracker {
 
 impl SpeedTracker {
     pub fn new() -> Self {
-        Self { samples: VecDeque::with_capacity(WINDOW_SAMPLES + 1), last: None, peak_mbs: 0.0 }
+        Self {
+            samples: VecDeque::with_capacity(WINDOW_SAMPLES + 1),
+            last: None,
+            peak_mbs: 0.0,
+        }
     }
 
     /// Register a block write at `now` reaching `cumulative_bytes` in total.
@@ -91,7 +95,10 @@ pub struct ProgressEmitter {
 
 impl ProgressEmitter {
     pub fn new(min_interval: Duration) -> Self {
-        Self { min_interval, last_emit: None }
+        Self {
+            min_interval,
+            last_emit: None,
+        }
     }
 
     /// Returns true when an event should be emitted at `now`.
@@ -142,7 +149,14 @@ mod tests {
         // 4 MiB in the next 2 s => 2 MiB/s
         tracker.sample(t0 + Duration::from_secs(3), 12 * BLOCK_SIZE as u64);
         assert!((tracker.peak_mbs() - 8.0).abs() < 1e-9);
-        assert!((tracker.window_only_avg_assert_helper(t0 + Duration::from_secs(3), 12 * BLOCK_SIZE as u64) - 2.0).abs() < 1e-9);
+        assert!(
+            (tracker.window_only_avg_assert_helper(
+                t0 + Duration::from_secs(3),
+                12 * BLOCK_SIZE as u64
+            ) - 2.0)
+                .abs()
+                < 1e-9
+        );
     }
 
     impl SpeedTracker {

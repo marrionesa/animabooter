@@ -30,6 +30,8 @@ impl CancelToken {
 
 impl std::fmt::Debug for CancelToken {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CancelToken").field("cancelled", &self.is_cancelled()).finish()
+        f.debug_struct("CancelToken")
+            .field("cancelled", &self.is_cancelled())
+            .finish()
     }
 }

@@ -36,8 +36,7 @@ pub async fn detect_image(image_path: String) -> Result<DetectionInfo, AppError>
     let path = Path::new(&image_path);
     let detection = detect_file(path)?;
     let file_size = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
-    let estimated_size =
-        estimate_uncompressed_size(path, detection.kind, Some(file_size));
+    let estimated_size = estimate_uncompressed_size(path, detection.kind, Some(file_size));
     Ok(DetectionInfo {
         kind: format!("{:?}", detection.kind).to_lowercase(),
         compressed: detection.kind.compressed(),
@@ -53,15 +52,15 @@ pub async fn get_settings(state: State<'_, AppState>) -> Result<Settings, AppErr
 }
 
 #[tauri::command]
-pub async fn set_settings(
-    state: State<'_, AppState>,
-    settings: Settings,
-) -> Result<(), AppError> {
+pub async fn set_settings(state: State<'_, AppState>, settings: Settings) -> Result<(), AppError> {
     if !matches!(
         settings.theme.as_str(),
         "midnight" | "catppuccin-mocha" | "tokyo-night"
     ) {
-        return Err(AppError::config(format!("unknown theme: {}", settings.theme)));
+        return Err(AppError::config(format!(
+            "unknown theme: {}",
+            settings.theme
+        )));
     }
     *state.lock_settings()? = settings.clone();
     state.save_settings(&settings)

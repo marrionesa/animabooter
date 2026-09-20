@@ -56,5 +56,8 @@ pub fn announce_intent(sink: &dyn EventSink, drive: &DriveInfo, image_name: &str
         drive.vendor.trim(),
         drive.model.trim()
     ));
-    sink.log(format!("safety: ALL DATA on {} will be destroyed", drive.path));
+    sink.log(format!(
+        "safety: ALL DATA on {} will be destroyed",
+        drive.path
+    ));
 }

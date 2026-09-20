@@ -19,7 +19,7 @@ pub mod progress;
 pub mod verifier;
 pub mod writer;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// Streaming block size for every stage (4 MiB). The image is NEVER fully
 /// loaded into RAM.
@@ -97,7 +97,10 @@ pub fn timestamp() -> String {
 
 /// Emit an error payload built from `AppError` through the sink.
 pub fn emit_error(sink: &dyn EventSink, err: &crate::error::AppError) {
-    sink.error(&ErrorPayload { message: err.to_string(), hint: err.hint() });
+    sink.error(&ErrorPayload {
+        message: err.to_string(),
+        hint: err.hint(),
+    });
 }
 
 /// Minimal sink used by unit tests (discards every event).

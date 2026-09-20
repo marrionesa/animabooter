@@ -40,7 +40,9 @@ pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
 
     let mut drives = Vec::new();
     for entry in disks {
-        let Some(dict) = entry.as_dict() else { continue };
+        let Some(dict) = entry.as_dict() else {
+            continue;
+        };
         // Whole disks only — entries with partition/volume children are
         // containers for their parts.
         if dict.contains_key("Partitions") || dict.contains_key("APFSVolumes") {
@@ -49,7 +51,9 @@ pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
         let Some(name) = dict.get("DeviceIdentifier").and_then(Value::as_string) else {
             continue;
         };
-        let Some(info) = disk_info(name)? else { continue };
+        let Some(info) = disk_info(name)? else {
+            continue;
+        };
 
         let (internal, removable, model, bus, size) = info;
         if (internal || !removable) && !unsafe_mode {
@@ -59,11 +63,19 @@ pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
         drives.push(DriveInfo {
             id: name.to_string(),
             path: format!("/dev/{name}"),
-            model: if model.is_empty() { "Disk".to_string() } else { model },
+            model: if model.is_empty() {
+                "Disk".to_string()
+            } else {
+                model
+            },
             vendor: String::new(),
             size_bytes: size,
             removable,
-            bus: if bus.is_empty() { "unknown".to_string() } else { bus.to_lowercase() },
+            bus: if bus.is_empty() {
+                "unknown".to_string()
+            } else {
+                bus.to_lowercase()
+            },
             serial: String::new(),
             is_system: internal,
         });
@@ -90,7 +102,9 @@ fn disk_info(name: &str) -> Result<Option<DiskInfo>, AppError> {
         return Ok(None);
     }
     let value = parse_plist(&output.stdout)?;
-    let Some(dict) = value.as_dict() else { return Ok(None) };
+    let Some(dict) = value.as_dict() else {
+        return Ok(None);
+    };
 
     let boolean = |key: &str| dict.get(key).and_then(Value::as_boolean).unwrap_or(false);
     let string = |key: &str| {
@@ -112,7 +126,9 @@ fn disk_info(name: &str) -> Result<Option<DiskInfo>, AppError> {
 
 fn plist_u64(value: &Value) -> Option<u64> {
     match value {
-        Value::Integer(i) => i.as_unsigned().or_else(|| i.as_signed().map(|v| v.max(0) as u64)),
+        Value::Integer(i) => i
+            .as_unsigned()
+            .or_else(|| i.as_signed().map(|v| v.max(0) as u64)),
         Value::Real(f) => Some(*f as u64),
         _ => None,
     }
@@ -196,7 +212,9 @@ pub fn eject(path: &Path) -> Result<(), AppError> {
     let mut output = eject_once();
     if !output.as_ref().is_ok_and(|o| o.status.success()) {
         // Busy: force-unmount the whole disk and retry once.
-        let _ = Command::new("diskutil").args(["unmountDisk", "force", &name]).output();
+        let _ = Command::new("diskutil")
+            .args(["unmountDisk", "force", &name])
+            .output();
         output = eject_once();
     }
 
@@ -230,9 +248,18 @@ mod tests {
 
     #[test]
     fn raw_device_path_inserts_r() {
-        assert_eq!(raw_device_path(Path::new("/dev/disk2")), PathBuf::from("/dev/rdisk2"));
-        assert_eq!(raw_device_path(Path::new("/dev/disk42")), PathBuf::from("/dev/rdisk42"));
-        assert_eq!(raw_device_path(Path::new("/dev/something")), PathBuf::from("/dev/something"));
+        assert_eq!(
+            raw_device_path(Path::new("/dev/disk2")),
+            PathBuf::from("/dev/rdisk2")
+        );
+        assert_eq!(
+            raw_device_path(Path::new("/dev/disk42")),
+            PathBuf::from("/dev/rdisk42")
+        );
+        assert_eq!(
+            raw_device_path(Path::new("/dev/something")),
+            PathBuf::from("/dev/something")
+        );
     }
 
     #[test]

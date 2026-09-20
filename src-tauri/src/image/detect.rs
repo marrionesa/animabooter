@@ -60,7 +60,10 @@ pub fn detect_prefix(prefix: &[u8]) -> Detection {
             || ascii_contains(&prefix[0x8008..0x8028], b"WIN32")
             || ascii_contains(&prefix[0x8384..0x8404], b"MICROSOFT"));
 
-    Detection { kind, is_windows_iso }
+    Detection {
+        kind,
+        is_windows_iso,
+    }
 }
 
 /// Open the file and detect its kind.
@@ -87,8 +90,11 @@ fn ascii_contains(hay: &[u8], needle: &[u8]) -> bool {
     if needle.is_empty() || hay.len() < needle.len() {
         return false;
     }
-    hay.windows(needle.len())
-        .any(|w| w.iter().zip(needle).all(|(a, b)| a.to_ascii_uppercase() == *b))
+    hay.windows(needle.len()).any(|w| {
+        w.iter()
+            .zip(needle)
+            .all(|(a, b)| a.to_ascii_uppercase() == *b)
+    })
 }
 
 /// Best-effort estimate of the uncompressed payload size.
@@ -197,15 +203,23 @@ mod tests {
         let dir = std::env::temp_dir();
         let path = dir.join(format!("animabooter-test-{}.gz", std::process::id()));
         {
-            let mut enc =
-                flate2::write::GzEncoder::new(std::fs::File::create(&path).unwrap(), flate2::Compression::default());
+            let mut enc = flate2::write::GzEncoder::new(
+                std::fs::File::create(&path).unwrap(),
+                flate2::Compression::default(),
+            );
             enc.write_all(&vec![0u8; 1024]).unwrap();
         }
         let compressed = std::fs::metadata(&path).unwrap().len();
         // Honest case: 1024 uncompressed bytes > 0… well, ISIZE=1024 >= compressed? yes.
-        assert_eq!(estimate_uncompressed_size(&path, ImageKind::Gzip, Some(compressed)), Some(1024));
+        assert_eq!(
+            estimate_uncompressed_size(&path, ImageKind::Gzip, Some(compressed)),
+            Some(1024)
+        );
         // Wrap-around suspicion: claim the compressed file is HUGE (bigger than ISIZE).
-        assert_eq!(estimate_uncompressed_size(&path, ImageKind::Gzip, Some(compressed * 1000)), None);
+        assert_eq!(
+            estimate_uncompressed_size(&path, ImageKind::Gzip, Some(compressed * 1000)),
+            None
+        );
         let _ = std::fs::remove_file(&path);
     }
 }

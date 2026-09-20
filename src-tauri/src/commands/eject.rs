@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use tauri::State;
 
+use crate::core::EventSink;
 use crate::error::AppError;
 use crate::state::{AppState, TauriEventSink};
 

@@ -59,18 +59,19 @@ pub fn run_verify(
                 drain_spans(spans);
                 return Err(AppError::Cancelled);
             }
-            let chunk =
-                usize::try_from(span.len - done_in_span).unwrap_or(0).min(buffer.len());
+            let chunk = usize::try_from(span.len - done_in_span)
+                .unwrap_or(0)
+                .min(buffer.len());
             if chunk == 0 {
                 return Err(AppError::device("verification chunk computation failed"));
             }
             let slice = &mut buffer[..chunk];
-            reader.read_at(span.offset + u64::from(done_in_span), slice).map_err(|e| {
-                AppError::Device {
+            reader
+                .read_at(span.offset + u64::from(done_in_span), slice)
+                .map_err(|e| AppError::Device {
                     message: format!("verify read failed at offset {}: {e}", span.offset),
                     hint: Some(HINT_UNKNOWN_STATE.to_string()),
-                }
-            })?;
+                })?;
             hasher.update(slice);
             done_in_span += chunk as u32;
             checked += chunk as u64;
@@ -83,7 +84,11 @@ pub fn run_verify(
                 } else {
                     0.0
                 };
-                sink.verify_progress(&VerifyPayload { checked, total, percent });
+                sink.verify_progress(&VerifyPayload {
+                    checked,
+                    total,
+                    percent,
+                });
             }
         }
     }
@@ -94,14 +99,21 @@ pub fn run_verify(
 
     // Always emit the final 100% verification state.
     let total = total_written.load(Ordering::SeqCst).max(checked);
-    sink.verify_progress(&VerifyPayload { checked, total, percent: 100.0 });
+    sink.verify_progress(&VerifyPayload {
+        checked,
+        total,
+        percent: 100.0,
+    });
 
     sink.log(format!(
         "verify: read-back finished ({} bytes hashed), comparing with source hash",
         checked
     ));
 
-    Ok(VerifiedOutput { blake3_hex: hasher.finalize().to_hex().to_string(), checked_bytes: checked })
+    Ok(VerifiedOutput {
+        blake3_hex: hasher.finalize().to_hex().to_string(),
+        checked_bytes: checked,
+    })
 }
 
 /// Drain the span channel so a cancelled pipeline never deadlocks.
@@ -132,8 +144,14 @@ mod tests {
         let sink = crate::core::test_support::NoopSink;
         let total = std::sync::Arc::new(AtomicU64::new(data.len() as u64));
         let handle = std::thread::spawn(move || {
-            let _ = tx.send(WriteSpan { offset: 0, len: 4096 });
-            let _ = tx.send(WriteSpan { offset: 4096, len: 4096 });
+            let _ = tx.send(WriteSpan {
+                offset: 0,
+                len: 4096,
+            });
+            let _ = tx.send(WriteSpan {
+                offset: 4096,
+                len: 4096,
+            });
         });
         let out = run_verify(reader, rx, total, Default::default(), &sink, Duration::ZERO);
         handle.join().unwrap();
@@ -157,13 +175,19 @@ mod tests {
         let sink = crate::core::test_support::NoopSink;
         let total = std::sync::Arc::new(AtomicU64::new(4096));
         let handle = std::thread::spawn(move || {
-            let _ = tx.send(WriteSpan { offset: 0, len: 4096 });
+            let _ = tx.send(WriteSpan {
+                offset: 0,
+                len: 4096,
+            });
         });
         let out = run_verify(reader, rx, total, Default::default(), &sink, Duration::ZERO);
         handle.join().unwrap();
         let mut expect = Hasher::new();
         expect.update(&data);
-        assert_ne!(out.unwrap().blake3_hex, expect.finalize().to_hex().to_string());
+        assert_ne!(
+            out.unwrap().blake3_hex,
+            expect.finalize().to_hex().to_string()
+        );
     }
 
     // Silence unused import when MemoryReader import is only used in some paths.

@@ -35,9 +35,9 @@ use windows::Win32::Storage::FileSystem::{
     IOCTL_STORAGE_GET_DEVICE_NUMBER, OPEN_EXISTING,
 };
 use windows::Win32::Storage::IOCTL_STORAGE_QUERY_PROPERTY;
-use windows::Win32::System::IO::DeviceIoControl;
 use windows::Win32::System::Ioctl::{IOCTL_DISK_GET_DRIVE_GEOMETRY, IOCTL_DISK_GET_LENGTH_INFO};
 use windows::Win32::System::Threading::GetCurrentProcess;
+use windows::Win32::System::IO::DeviceIoControl;
 
 use crate::core::writer::{BlockReader, BlockWriter};
 use crate::core::EventSink;
@@ -72,7 +72,11 @@ fn open_path(path: &str, read: bool, write: bool, no_buffering: bool) -> Result<
     if write {
         access |= GENERIC_WRITE.0;
     }
-    let flags = if no_buffering { FILE_FLAG_NO_BUFFERING } else { Default::default() };
+    let flags = if no_buffering {
+        FILE_FLAG_NO_BUFFERING
+    } else {
+        Default::default()
+    };
     unsafe {
         CreateFileW(
             PCWSTR(wide.as_ptr()),
@@ -104,14 +108,28 @@ fn ioctl(
         None => (None, 0),
     };
     unsafe {
-        DeviceIoControl(handle, code, in_ptr, in_len, out_ptr, out_len, Some(&mut returned), None)
+        DeviceIoControl(
+            handle,
+            code,
+            in_ptr,
+            in_len,
+            out_ptr,
+            out_len,
+            Some(&mut returned),
+            None,
+        )
     }
     .map_err(werr)
 }
 
 fn u32_at(buf: &[u8], offset: usize) -> Option<u32> {
     if offset + 4 <= buf.len() {
-        Some(u32::from_le_bytes([buf[offset], buf[offset + 1], buf[offset + 2], buf[offset + 3]]))
+        Some(u32::from_le_bytes([
+            buf[offset],
+            buf[offset + 1],
+            buf[offset + 2],
+            buf[offset + 3],
+        ]))
     } else {
         None
     }
@@ -158,11 +176,11 @@ pub fn is_elevated() -> bool {
 
 /// Relaunch AnimaBooter with the `runas` verb (PowerShell), then exit.
 pub fn restart_as_admin() -> Result<(), AppError> {
-    let exe = std::env::current_exe().map_err(|e| {
-        AppError::platform(format!("cannot locate current executable: {e}"))
-    })?;
+    let exe = std::env::current_exe()
+        .map_err(|e| AppError::platform(format!("cannot locate current executable: {e}")))?;
     let exe_str = exe.to_string_lossy().replace('\'', "");
-    let script = format!("Start-Process -FilePath '{exe_str}' -Verb RunAs -ArgumentList '--elevated'");
+    let script =
+        format!("Start-Process -FilePath '{exe_str}' -Verb RunAs -ArgumentList '--elevated'");
     let spawned = Command::new("powershell")
         .args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &script])
         .spawn();
@@ -173,7 +191,9 @@ pub fn restart_as_admin() -> Result<(), AppError> {
         }
         Err(e) => Err(AppError::Platform {
             message: format!("could not launch elevated restart: {e}"),
-            hint: Some("Right-click the app and choose 'Run as administrator' manually.".to_string()),
+            hint: Some(
+                "Right-click the app and choose 'Run as administrator' manually.".to_string(),
+            ),
         }),
     }
 }
@@ -211,13 +231,18 @@ fn drive_properties(physical: u32) -> Option<DriveProperties> {
 
     // Size: IOCTL_DISK_GET_LENGTH_INFO -> GET_LENGTH_INFORMATION { Length: i64 }
     let mut len_buf = [0u8; 16];
-    let size = ioctl(handle, IOCTL_DISK_GET_LENGTH_INFO, None, Some((len_buf.as_mut_ptr(), 16)))
-        .ok()
-        .and_then(|_| {
-            let raw = i64::from_le_bytes(len_buf[0..8].try_into().ok()?);
-            Some(raw.max(0) as u64)
-        })
-        .unwrap_or(0);
+    let size = ioctl(
+        handle,
+        IOCTL_DISK_GET_LENGTH_INFO,
+        None,
+        Some((len_buf.as_mut_ptr(), 16)),
+    )
+    .ok()
+    .and_then(|_| {
+        let raw = i64::from_le_bytes(len_buf[0..8].try_into().ok()?);
+        Some(raw.max(0) as u64)
+    })
+    .unwrap_or(0);
 
     // Geometry: DISK_GEOMETRY.BytesPerSector sits at offset 20
     // (LARGE_INTEGER Cylinders[8], MediaType[4], TracksPerCylinder[4], SectorsPerTrack[4]).
@@ -264,7 +289,9 @@ fn product_id_offset(buf: &[u8]) -> u32 {
 
 fn is_system_drive(physical: u32) -> bool {
     let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
-    let Some(letter) = system_root.chars().next() else { return false };
+    let Some(letter) = system_root.chars().next() else {
+        return false;
+    };
     matches!(volume_device_number(letter), Some((dev, _)) if dev == physical)
 }
 
@@ -311,7 +338,11 @@ pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
         drives.push(DriveInfo {
             id: format!("PhysicalDrive{physical}"),
             path: format!(r"\\.\PhysicalDrive{physical}"),
-            model: if product.is_empty() { "USB Device".to_string() } else { product },
+            model: if product.is_empty() {
+                "USB Device".to_string()
+            } else {
+                product
+            },
             vendor,
             size_bytes: size,
             removable,
@@ -372,22 +403,34 @@ impl WindowsWriter {
         use std::os::windows::io::FromRawHandle;
         // SAFETY: ownership of `handle` moves into the File; CloseHandle is
         // never called on it again.
-        let file = unsafe { std::fs::File::from_raw_handle(handle.0 as std::os::windows::io::RawHandle) };
+        let file =
+            unsafe { std::fs::File::from_raw_handle(handle.0 as std::os::windows::io::RawHandle) };
         let scratch = AlignedBuffer::new(crate::core::BLOCK_SIZE + sector * 2, sector)
             .ok_or_else(|| AppError::device("cannot allocate aligned write buffer"))?;
-        Ok(Self { file, scratch, sector })
+        Ok(Self {
+            file,
+            scratch,
+            sector,
+        })
     }
 }
 
 impl BlockWriter for WindowsWriter {
     fn write_at(&mut self, offset: u64, data: &[u8]) -> io::Result<()> {
         use std::io::{Seek, Write};
-        debug_assert_eq!(offset % self.sector as u64, 0, "offset must be sector-aligned");
+        debug_assert_eq!(
+            offset % self.sector as u64,
+            0,
+            "offset must be sector-aligned"
+        );
         let aligned_len = data.len().div_ceil(self.sector) * self.sector;
         let scratch = &mut self.scratch;
         let slice = scratch.slice_mut();
         if aligned_len > slice.len() {
-            return Err(io::Error::new(io::ErrorKind::InvalidInput, "block larger than aligned scratch buffer"));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "block larger than aligned scratch buffer",
+            ));
         }
         slice[..data.len()].copy_from_slice(data);
         slice[data.len()..aligned_len].fill(0); // pad the final partial sector
@@ -413,10 +456,15 @@ pub struct WindowsReader {
 impl WindowsReader {
     fn new(handle: HANDLE, sector: usize) -> Result<Self, AppError> {
         use std::os::windows::io::FromRawHandle;
-        let file = unsafe { std::fs::File::from_raw_handle(handle.0 as std::os::windows::io::RawHandle) };
+        let file =
+            unsafe { std::fs::File::from_raw_handle(handle.0 as std::os::windows::io::RawHandle) };
         let scratch = AlignedBuffer::new(crate::core::BLOCK_SIZE + sector * 2, sector)
             .ok_or_else(|| AppError::device("cannot allocate aligned read buffer"))?;
-        Ok(Self { file, scratch, sector })
+        Ok(Self {
+            file,
+            scratch,
+            sector,
+        })
     }
 }
 
@@ -493,12 +541,16 @@ fn lock_and_dismount_volumes(physical: u32, sink: &dyn EventSink) {
             continue;
         }
         let letter = (b'A' + i as u8) as char;
-        let Some((number, _)) = volume_device_number(letter) else { continue };
+        let Some((number, _)) = volume_device_number(letter) else {
+            continue;
+        };
         if number != physical {
             continue;
         }
         let path = format!(r"\\.\{letter}:");
-        let Ok(handle) = open_path(&path, true, true, false) else { continue };
+        let Ok(handle) = open_path(&path, true, true, false) else {
+            continue;
+        };
         let locked = ioctl(handle, FSCTL_LOCK_VOLUME, None, None).is_ok();
         let dismounted = ioctl(handle, FSCTL_DISMOUNT_VOLUME, None, None).is_ok();
         let _ = unsafe { CloseHandle(handle) };
@@ -559,7 +611,10 @@ pub fn check_flash_allowed(
     let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
     if let Some(letter) = system_root.chars().next() {
         if let Some((number, _)) = volume_device_number(letter) {
-            if drive.path.eq_ignore_ascii_case(&format!(r"\\.\PhysicalDrive{number}")) {
+            if drive
+                .path
+                .eq_ignore_ascii_case(&format!(r"\\.\PhysicalDrive{number}"))
+            {
                 return Err(AppError::Safety {
                     message: format!(
                         "{} contains the Windows system volume ({}) — flashing it would destroy the operating system",

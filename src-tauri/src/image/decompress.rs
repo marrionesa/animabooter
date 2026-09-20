@@ -8,7 +8,10 @@ use crate::image::detect::ImageKind;
 
 /// Wrap a raw reader into the decompressor matching `kind`.
 /// `Raw` is pass-through.
-pub fn wrap(reader: Box<dyn Read + Send>, kind: ImageKind) -> Result<Box<dyn Read + Send>, AppError> {
+pub fn wrap(
+    reader: Box<dyn Read + Send>,
+    kind: ImageKind,
+) -> Result<Box<dyn Read + Send>, AppError> {
     match kind {
         ImageKind::Raw => Ok(reader),
         ImageKind::Gzip => {

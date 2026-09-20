@@ -28,7 +28,11 @@ fn default_theme() -> String {
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { unsafe_mode: false, theme: default_theme(), language: None }
+        Self {
+            unsafe_mode: false,
+            theme: default_theme(),
+            language: None,
+        }
     }
 }
 
@@ -65,9 +69,8 @@ impl AppState {
     }
 
     pub fn save_settings(&self, settings: &Settings) -> Result<(), AppError> {
-        std::fs::create_dir_all(&self.config_dir).map_err(|e| {
-            AppError::config(format!("cannot create config directory: {e}"))
-        })?;
+        std::fs::create_dir_all(&self.config_dir)
+            .map_err(|e| AppError::config(format!("cannot create config directory: {e}")))?;
         let json = serde_json::to_vec_pretty(settings)?;
         std::fs::write(self.settings_path(), json)
             .map_err(|e| AppError::config(format!("cannot write settings.json: {e}")))?;
@@ -114,7 +117,12 @@ impl EventSink for TauriEventSink {
     }
 
     fn log(&self, line: String) {
-        let _ = self.0.emit("flash://log", LogLine { line: format!("{} {}", crate::core::timestamp(), line) });
+        let _ = self.0.emit(
+            "flash://log",
+            LogLine {
+                line: format!("{} {}", crate::core::timestamp(), line),
+            },
+        );
     }
 
     fn error(&self, payload: &ErrorPayload) {

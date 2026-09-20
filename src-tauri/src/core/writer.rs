@@ -59,11 +59,15 @@ impl MemoryDevice {
     }
 
     pub fn writer(&self) -> MemoryWriter {
-        MemoryWriter { device: self.clone() }
+        MemoryWriter {
+            device: self.clone(),
+        }
     }
 
     pub fn reader(&self) -> MemoryReader {
-        MemoryReader { device: self.clone() }
+        MemoryReader {
+            device: self.clone(),
+        }
     }
 
     /// Flip one byte (test support for verification-failure cases).

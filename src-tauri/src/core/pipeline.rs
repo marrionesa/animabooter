@@ -42,8 +42,8 @@ use crate::core::verifier::run_verify;
 use crate::core::writer::{BlockReader, BlockWriter, WriteSpan};
 use crate::core::{DonePayload, EventSink, Phase, ProgressPayload, BLOCK_SIZE};
 use crate::error::AppError;
-use crate::image::detect::{detect_file, estimate_uncompressed_size, ImageKind};
 use crate::image::decompress;
+use crate::image::detect::{detect_file, estimate_uncompressed_size, ImageKind};
 use crate::safety::HINT_UNKNOWN_STATE;
 
 /// Maximum one progress event every 200 ms.
@@ -131,10 +131,36 @@ fn drain_blocks(rx: Receiver<Block>) {
     for _ in rx {}
 }
 
+/// Join a pipeline worker thread and fetch its report from the result
+/// channel.
+///
+/// The three workers return `()` and deliver their `Result` through a
+/// channel: `join` catches a panic, `recv` catches a thread that finished
+/// without reporting. Both become plain `AppError`s so `run` stays
+/// panic-free by contract.
+fn join_worker<T>(
+    handle: std::thread::JoinHandle<()>,
+    rx: Receiver<T>,
+    stage: &'static str,
+) -> Result<T, AppError> {
+    if handle.join().is_err() {
+        return Err(AppError::platform(format!("{stage} thread crashed (panic)")));
+    }
+    rx.recv()
+        .map_err(|_| AppError::platform(format!("{stage} thread died without reporting")))
+}
+
 /// Run the full pipeline. Emits every UI event through `sink`.
 pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult, AppError> {
     let start = Instant::now();
-    let PipelineJob { source, writer, reader, verify, cancel, drive_label } = job;
+    let PipelineJob {
+        source,
+        writer,
+        reader,
+        verify,
+        cancel,
+        drive_label,
+    } = job;
 
     // ---------- Source ----------
     let (src, kind, total) = open_source(&source)?;
@@ -168,7 +194,8 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
     let (span_tx, span_rx) = sync_channel::<WriteSpan>(SPAN_CHANNEL_CAP);
     let (hash_tx, hash_rx) = std::sync::mpsc::channel::<Result<(String, String), AppError>>();
     let (stats_tx, stats_rx) = std::sync::mpsc::channel::<Result<WriterStats, AppError>>();
-    let (ver_tx, ver_rx) = std::sync::mpsc::channel::<Result<crate::core::verifier::VerifiedOutput, AppError>>();
+    let (ver_tx, ver_rx) =
+        std::sync::mpsc::channel::<Result<crate::core::verifier::VerifiedOutput, AppError>>();
     let total_written = Arc::new(AtomicU64::new(0));
 
     // ---------- Stage 1: reader ----------
@@ -190,12 +217,12 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
                         // Fill one full block unless EOF cuts it short.
                         let mut filled = 0usize;
                         while filled < buf.len() {
-                            let n = src
-                                .read(&mut buf[filled..])
-                                .map_err(|e| AppError::Image {
-                                    message: format!("image read failed at offset {offset}: {e}"),
-                                    hint: Some("Check the image file and re-download if needed.".into()),
-                                })?;
+                            let n = src.read(&mut buf[filled..]).map_err(|e| AppError::Image {
+                                message: format!("image read failed at offset {offset}: {e}"),
+                                hint: Some(
+                                    "Check the image file and re-download if needed.".into(),
+                                ),
+                            })?;
                             if n == 0 {
                                 break; // EOF
                             }
@@ -276,9 +303,11 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
                                 let window = tracker.sample(now, written);
                                 if emitter.should_emit(now) {
                                     let eta_secs = match (total, window) {
-                                        (Some(t), w) if w > 0.0 && t > written => {
-                                            Some(((t - written) as f64 / (w * crate::core::progress::MIB)).max(0.0))
-                                        }
+                                        (Some(t), w) if w > 0.0 && t > written => Some(
+                                            ((t - written) as f64
+                                                / (w * crate::core::progress::MIB))
+                                                .max(0.0),
+                                        ),
                                         _ => None,
                                     };
                                     sink.progress(&ProgressPayload {
@@ -286,8 +315,9 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
                                         total,
                                         speed_mbs: window,
                                         eta_secs,
-                                        percent: total
-                                            .map(|t| ((written as f64 / t as f64) * 100.0).min(100.0)),
+                                        percent: total.map(|t| {
+                                            ((written as f64 / t as f64) * 100.0).min(100.0)
+                                        }),
                                     });
                                 }
                             }
@@ -298,7 +328,9 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
                         return Err(AppError::Cancelled);
                     }
                     // HONEST FLUSH: never report success before this succeeds.
-                    sink.log("write: flushing OS buffers to the physical device (sync_all)".to_string());
+                    sink.log(
+                        "write: flushing OS buffers to the physical device (sync_all)".to_string(),
+                    );
                     writer.sync().map_err(|e| AppError::Device {
                         message: format!("final flush (sync_all) failed: {e}"),
                         hint: Some(HINT_UNKNOWN_STATE.to_string()),
@@ -312,7 +344,10 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
                         percent: Some(100.0),
                     });
                     sink.log(format!("write: {} bytes written", written));
-                    Ok(WriterStats { written, peak_mbs: tracker.peak_mbs() })
+                    Ok(WriterStats {
+                        written,
+                        peak_mbs: tracker.peak_mbs(),
+                    })
                 })();
                 // Drop the span channel so the verifier can finish.
                 drop(span_tx);
@@ -346,16 +381,10 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
     };
 
     // ---------- Join & decide ----------
-    let reader_result = reader_handle.join().map_err(|_| {
-        AppError::platform("reader thread crashed (panic)") // join on panic payload
-    }).and_then(|r| r);
-    let writer_result = writer_handle.join().map_err(|_| {
-        AppError::platform("writer thread crashed (panic)")
-    }).and_then(|r| r);
+    let reader_result = join_worker(reader_handle, hash_rx, "reader");
+    let writer_result = join_worker(writer_handle, stats_rx, "writer");
     let verifier_result = match verifier_handle {
-        Some(handle) => Some(handle.join().map_err(|_| {
-            AppError::platform("verifier thread crashed (panic)")
-        }).and_then(|r| r)),
+        Some(handle) => Some(join_worker(handle, ver_rx, "verifier")),
         None => None,
     };
 
@@ -365,7 +394,7 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
         emit_failure(&sink, e);
         return Err(e.clone());
     }
-    if let Err(e) = &verifier_result {
+    if let Some(Err(e)) = &verifier_result {
         emit_failure(&sink, e);
         return Err(e.clone());
     }
@@ -470,7 +499,13 @@ mod tests {
             .collect()
     }
 
-    fn mem_job(data: Vec<u8>, kind: ImageKind, verify: bool, cancel: CancelToken, dev: &MemoryDevice) -> PipelineJob {
+    fn mem_job(
+        data: Vec<u8>,
+        kind: ImageKind,
+        verify: bool,
+        cancel: CancelToken,
+        dev: &MemoryDevice,
+    ) -> PipelineJob {
         PipelineJob {
             source: SourceSpec::Bytes(data, kind),
             writer: Box::new(dev.writer()),
@@ -485,8 +520,17 @@ mod tests {
     fn full_run_writes_and_verifies() {
         let original = make_source(2 * BLOCK_SIZE + 777_777);
         let dev = MemoryDevice::new();
-        let res = run(mem_job(original.clone(), ImageKind::Raw, true, CancelToken::new(), &dev), Arc::new(NoopSink))
-            .expect("pipeline should succeed");
+        let res = run(
+            mem_job(
+                original.clone(),
+                ImageKind::Raw,
+                true,
+                CancelToken::new(),
+                &dev,
+            ),
+            Arc::new(NoopSink),
+        )
+        .expect("pipeline should succeed");
         assert!(res.verified);
         assert_eq!(res.total_bytes, original.len() as u64);
         assert_eq!(dev.written(), original);
@@ -537,9 +581,7 @@ mod tests {
         impl BlockWriter for CorruptingWriter {
             fn write_at(&mut self, offset: u64, data: &[u8]) -> std::io::Result<()> {
                 self.inner.write_at(offset, data)?;
-                if !self.fired
-                    && offset <= self.target
-                    && offset + data.len() as u64 > self.target
+                if !self.fired && offset <= self.target && offset + data.len() as u64 > self.target
                 {
                     self.inner.corrupt(self.target);
                     self.fired = true;
@@ -553,7 +595,11 @@ mod tests {
 
         let job = PipelineJob {
             source: SourceSpec::Bytes(original, ImageKind::Raw),
-            writer: Box::new(CorruptingWriter { inner: dev.writer(), target: BLOCK_SIZE as u64 + 3, fired: false }),
+            writer: Box::new(CorruptingWriter {
+                inner: dev.writer(),
+                target: BLOCK_SIZE as u64 + 3,
+                fired: false,
+            }),
             reader: Box::new(dev.reader()),
             verify: true,
             cancel: CancelToken::new(),
@@ -593,12 +639,21 @@ mod tests {
         }
 
         let job = mem_job(data, ImageKind::Raw, true, cancel.clone(), &dev);
-        let res = run(job, Arc::new(CancelOnFirstProgress { cancel: cancel.clone(), seen: AtomicUsize::new(0) }));
+        let res = run(
+            job,
+            Arc::new(CancelOnFirstProgress {
+                cancel: cancel.clone(),
+                seen: AtomicUsize::new(0),
+            }),
+        );
 
         assert!(matches!(res, Err(AppError::Cancelled)));
         // The writer stopped before finishing (all three tasks are joined by
         // the time run() returns, so this is a stable observation).
-        assert!(dev.written_len() < 8 * BLOCK_SIZE, "writer should have stopped early");
+        assert!(
+            dev.written_len() < 8 * BLOCK_SIZE,
+            "writer should have stopped early"
+        );
     }
 
     #[test]
@@ -624,12 +679,20 @@ mod tests {
             fn done(&self, _d: &DonePayload) {}
         }
 
-        let sink = Arc::new(CountingSink { percents: std::sync::Mutex::new(Vec::new()) });
+        let sink = Arc::new(CountingSink {
+            percents: std::sync::Mutex::new(Vec::new()),
+        });
         let sink_dyn: Arc<dyn EventSink> = Arc::clone(&sink);
-        let res = run(mem_job(data, ImageKind::Raw, true, CancelToken::new(), &dev), sink_dyn);
+        let res = run(
+            mem_job(data, ImageKind::Raw, true, CancelToken::new(), &dev),
+            sink_dyn,
+        );
         assert!(res.is_ok());
         let percents = sink.percents.lock().unwrap().clone();
-        assert!(percents.len() >= 2, "expected first + final progress events");
+        assert!(
+            percents.len() >= 2,
+            "expected first + final progress events"
+        );
         for pct in &percents {
             assert!((0.0..=100.0).contains(pct));
         }
@@ -640,8 +703,11 @@ mod tests {
     fn verify_disabled_reports_unverified() {
         let original = make_source(BLOCK_SIZE);
         let dev = MemoryDevice::new();
-        let res = run(mem_job(original, ImageKind::Raw, false, CancelToken::new(), &dev), Arc::new(NoopSink))
-            .expect("pipeline should succeed");
+        let res = run(
+            mem_job(original, ImageKind::Raw, false, CancelToken::new(), &dev),
+            Arc::new(NoopSink),
+        )
+        .expect("pipeline should succeed");
         assert!(!res.verified);
     }
 
@@ -649,7 +715,11 @@ mod tests {
     fn peak_speed_never_below_average_for_small_runs() {
         let original = make_source(BLOCK_SIZE);
         let dev = MemoryDevice::new();
-        let res = run(mem_job(original, ImageKind::Raw, true, CancelToken::new(), &dev), Arc::new(NoopSink)).unwrap();
+        let res = run(
+            mem_job(original, ImageKind::Raw, true, CancelToken::new(), &dev),
+            Arc::new(NoopSink),
+        )
+        .unwrap();
         // For a tiny in-memory run both are large; sanity only.
         assert!(res.avg_speed_mbs > 1.0 || MIB > 0.0);
     }

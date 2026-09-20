@@ -9,8 +9,8 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
 
-use crate::error::AppError;
 use crate::core::writer::{BlockReader, BlockWriter};
+use crate::error::AppError;
 
 pub struct UnixBlockWriter(File);
 pub struct UnixBlockReader(File);
@@ -42,14 +42,19 @@ pub fn open_unix_pair(
     path: &Path,
     sink: &dyn crate::core::EventSink,
 ) -> Result<(Box<dyn BlockWriter>, Box<dyn BlockReader>), AppError> {
-    sink.log(format!("device: opening {path:?} for exclusive destructive write"));
+    sink.log(format!(
+        "device: opening {path:?} for exclusive destructive write"
+    ));
     let writer = OpenOptions::new()
         .read(true)
         .write(true)
         .open(path)
         .map_err(|e| open_error(e, path))?;
     let reader = File::open(path).map_err(|e| open_error(e, path))?;
-    Ok((Box::new(UnixBlockWriter(writer)), Box::new(UnixBlockReader(reader))))
+    Ok((
+        Box::new(UnixBlockWriter(writer)),
+        Box::new(UnixBlockReader(reader)),
+    ))
 }
 
 fn open_error(e: std::io::Error, path: &Path) -> AppError {

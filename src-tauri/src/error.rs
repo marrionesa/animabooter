@@ -10,16 +10,28 @@ use serde::{Serialize, Serializer};
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum AppError {
     #[error("{message}")]
-    Io { message: String, hint: Option<String> },
+    Io {
+        message: String,
+        hint: Option<String>,
+    },
 
     #[error("{message}")]
-    Device { message: String, hint: Option<String> },
+    Device {
+        message: String,
+        hint: Option<String>,
+    },
 
     #[error("{message}")]
-    Permission { message: String, hint: Option<String> },
+    Permission {
+        message: String,
+        hint: Option<String>,
+    },
 
     #[error("{message}")]
-    Safety { message: String, hint: Option<String> },
+    Safety {
+        message: String,
+        hint: Option<String>,
+    },
 
     #[error("operation cancelled by the user")]
     Cancelled,
@@ -28,19 +40,31 @@ pub enum AppError {
     VerifyMismatch { expected: String, actual: String },
 
     #[error("{message}")]
-    Image { message: String, hint: Option<String> },
+    Image {
+        message: String,
+        hint: Option<String>,
+    },
 
     #[error("{message}")]
-    Compression { message: String, hint: Option<String> },
+    Compression {
+        message: String,
+        hint: Option<String>,
+    },
 
     #[error("{message}")]
-    Config { message: String, hint: Option<String> },
+    Config {
+        message: String,
+        hint: Option<String>,
+    },
 
     #[error("another flash operation is already running")]
     Busy,
 
     #[error("{message}")]
-    Platform { message: String, hint: Option<String> },
+    Platform {
+        message: String,
+        hint: Option<String>,
+    },
 }
 
 impl AppError {
@@ -57,24 +81,38 @@ impl AppError {
             | AppError::Platform { hint, .. } => hint.clone(),
             AppError::Cancelled => Some(crate::safety::HINT_UNKNOWN_STATE.to_string()),
             AppError::VerifyMismatch { .. } => Some(crate::safety::HINT_UNKNOWN_STATE.to_string()),
-            AppError::Busy => Some("Wait for the current operation to finish or cancel it.".to_string()),
+            AppError::Busy => {
+                Some("Wait for the current operation to finish or cancel it.".to_string())
+            }
         }
     }
 
     pub fn image(message: impl Into<String>) -> Self {
-        AppError::Image { message: message.into(), hint: None }
+        AppError::Image {
+            message: message.into(),
+            hint: None,
+        }
     }
 
     pub fn device(message: impl Into<String>) -> Self {
-        AppError::Device { message: message.into(), hint: None }
+        AppError::Device {
+            message: message.into(),
+            hint: None,
+        }
     }
 
     pub fn platform(message: impl Into<String>) -> Self {
-        AppError::Platform { message: message.into(), hint: None }
+        AppError::Platform {
+            message: message.into(),
+            hint: None,
+        }
     }
 
     pub fn config(message: impl Into<String>) -> Self {
-        AppError::Config { message: message.into(), hint: None }
+        AppError::Config {
+            message: message.into(),
+            hint: None,
+        }
     }
 }
 
@@ -86,7 +124,11 @@ struct SerializedAppError {
 
 impl Serialize for AppError {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        SerializedAppError { message: self.to_string(), hint: self.hint() }.serialize(serializer)
+        SerializedAppError {
+            message: self.to_string(),
+            hint: self.hint(),
+        }
+        .serialize(serializer)
     }
 }
 

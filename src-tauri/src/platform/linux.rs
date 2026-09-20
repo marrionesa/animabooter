@@ -12,16 +12,12 @@ use std::path::Path;
 use std::process::Command;
 
 use crate::core::EventSink;
-use crate::core::writer::{BlockReader, BlockWriter};
 use crate::error::AppError;
-use crate::platform::unix_common::open_unix_pair;
 use crate::safety::DriveInfo;
 
 pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
-    let mut context = udev::Context::new().map_err(|e| {
-        AppError::platform(format!("udev initialization failed: {e}"))
-    })?;
-    let mut enumerator = udev::Enumerator::new(&mut context)
+    // udev 0.9 owns its internal context; `Enumerator::new()` builds it for us.
+    let mut enumerator = udev::Enumerator::new()
         .map_err(|e| AppError::platform(format!("udev enumerator failed: {e}")))?;
     enumerator
         .match_subsystem("block")
@@ -38,7 +34,11 @@ pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
         if device.devtype().map(|dt| dt != "disk").unwrap_or(true) {
             continue;
         }
-        let Some(node) = device.devnode().and_then(|p| p.to_str()).map(str::to_string) else {
+        let Some(node) = device
+            .devnode()
+            .and_then(|p| p.to_str())
+            .map(str::to_string)
+        else {
             continue;
         };
         if !is_disk_node(&node) {
@@ -118,7 +118,10 @@ fn is_disk_node(node: &str) -> bool {
 }
 
 fn attr(device: &udev::Device, name: &str) -> Option<String> {
-    device.attribute_value(name).and_then(|v| v.to_str()).map(|s| s.trim().to_string())
+    device
+        .attribute_value(name)
+        .and_then(|v| v.to_str())
+        .map(|s| s.trim().to_string())
 }
 
 /// vendor/model live under `device/` for sd* disks (sysfs symlink), with a
@@ -155,7 +158,9 @@ pub fn is_partition_of(disk: &str, source: &str) -> bool {
     if source == disk {
         return false;
     }
-    let Some(rest) = source.strip_prefix(disk) else { return false };
+    let Some(rest) = source.strip_prefix(disk) else {
+        return false;
+    };
     let rest = rest.strip_prefix('p').unwrap_or(rest);
     !rest.is_empty() && rest.chars().all(|c| c.is_ascii_digit())
 }
@@ -190,15 +195,16 @@ pub fn check_flash_allowed(
     }
 
     if !mounted.is_empty() {
-        let list: Vec<String> =
-            mounted.iter().map(|(s, m)| format!("{s} → {m}")).collect();
+        let list: Vec<String> = mounted.iter().map(|(s, m)| format!("{s} → {m}")).collect();
         sink.log(format!(
             "safety: {} has mounted partitions, trying lazy unmount: {}",
             drive.path,
             list.join(", ")
         ));
         for (source, _) in &mounted {
-            let output = Command::new("udisksctl").args(["unmount", "-b", source]).output();
+            let output = Command::new("udisksctl")
+                .args(["unmount", "-b", source])
+                .output();
             match output {
                 Ok(out) if out.status.success() => {
                     sink.log(format!("safety: unmounted {source}"));
@@ -227,7 +233,9 @@ pub fn check_flash_allowed(
 /// Best-effort physical power-off through udisksctl.
 pub fn eject(path: &Path) -> Result<(), AppError> {
     let target = path.to_string_lossy().to_string();
-    let output = Command::new("udisksctl").args(["power-off", "-b", &target]).output();
+    let output = Command::new("udisksctl")
+        .args(["power-off", "-b", &target])
+        .output();
     match output {
         Ok(out) if out.status.success() => Ok(()),
         Ok(out) => Err(AppError::Device {

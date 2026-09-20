@@ -48,9 +48,7 @@ pub async fn flash(
         )
     })
     .await
-    .unwrap_or_else(|e| {
-        Err(AppError::platform(format!("flash task crashed: {e}")))
-    });
+    .unwrap_or_else(|e| Err(AppError::platform(format!("flash task crashed: {e}"))));
 
     state.busy.store(false, Ordering::SeqCst);
     result
@@ -69,14 +67,12 @@ fn run_flash_job(
     let drive = drives
         .into_iter()
         .find(|d| d.path.eq_ignore_ascii_case(drive_path))
-        .ok_or_else(|| {
-            AppError::Device {
-                message: format!("drive {drive_path} is no longer available"),
-                hint: Some(
-                    "The drive may have been unplugged. Refresh the list and select it again."
-                        .to_string(),
-                ),
-            }
+        .ok_or_else(|| AppError::Device {
+            message: format!("drive {drive_path} is no longer available"),
+            hint: Some(
+                "The drive may have been unplugged. Refresh the list and select it again."
+                    .to_string(),
+            ),
         })?;
 
     // 2. Detect the image (kind + honest size estimate + Windows-ISO flag).

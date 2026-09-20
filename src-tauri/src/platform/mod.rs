@@ -25,6 +25,3 @@ pub use linux::{check_flash_allowed, eject, list_drives, open_target_pair};
 pub use macos::{check_flash_allowed, eject, list_drives, open_target_pair};
 #[cfg(target_os = "windows")]
 pub use windows::{check_flash_allowed, eject, list_drives, open_target_pair, restart_as_admin};
-
-#[cfg(any(target_os = "linux", target_os = "macos"))]
-pub use unix_common::{UnixBlockReader, UnixBlockWriter};

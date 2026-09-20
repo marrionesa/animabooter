@@ -8,6 +8,8 @@ mod platform;
 mod safety;
 mod state;
 
+use tauri::Manager;
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
