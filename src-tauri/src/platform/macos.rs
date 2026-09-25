@@ -16,7 +16,6 @@ use plist::Value;
 
 use crate::core::EventSink;
 use crate::error::AppError;
-use crate::platform::unix_common::open_unix_pair;
 use crate::safety::DriveInfo;
 
 pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
@@ -33,14 +32,14 @@ pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
 
     let value = parse_plist(&output.stdout)?;
     let disks = value
-        .as_dict()
+        .as_dictionary()
         .and_then(|d| d.get("AllDisksAndPartitions"))
         .and_then(|v| v.as_array())
         .ok_or_else(|| AppError::platform("unexpected diskutil output shape"))?;
 
     let mut drives = Vec::new();
     for entry in disks {
-        let Some(dict) = entry.as_dict() else {
+        let Some(dict) = entry.as_dictionary() else {
             continue;
         };
         // Whole disks only — entries with partition/volume children are
@@ -86,7 +85,7 @@ pub fn list_drives(unsafe_mode: bool) -> Result<Vec<DriveInfo>, AppError> {
 }
 
 fn parse_plist(bytes: &[u8]) -> Result<Value, AppError> {
-    Value::from_reader(&mut &bytes[..])
+    Value::from_reader(std::io::Cursor::new(bytes))
         .map_err(|e| AppError::platform(format!("cannot parse diskutil plist: {e}")))
 }
 
@@ -102,7 +101,7 @@ fn disk_info(name: &str) -> Result<Option<DiskInfo>, AppError> {
         return Ok(None);
     }
     let value = parse_plist(&output.stdout)?;
-    let Some(dict) = value.as_dict() else {
+    let Some(dict) = value.as_dictionary() else {
         return Ok(None);
     };
 
