@@ -122,6 +122,37 @@ KERNEL=="sd*", ATTRS{removable}=="1", SUBSYSTEM=="block", MODE="0660", GROUP="pl
 
 Then: `sudo udevadm control --reload && sudo udevadm trigger`.
 
+### GitHub Actions status
+
+CI automation is currently **not** running automatically:
+
+- `.github/workflows/ci.yml` — manual only (`workflow_dispatch`): runs
+  `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test` and the
+  frontend checks (`svelte-check`, `vite build`) on Linux, plus Rust tests on
+  Windows and macOS. All local validation is expected to be run by hand.
+- `.github/workflows/release.yml` — manual (`workflow_dispatch`) **or** a
+  pushed `v*` tag; builds the platform bundles and uploads them as workflow
+  artifacts. It never runs on a normal push to `main`.
+
+Automatic CI on push/PR is planned for the public launch but is not enabled
+yet.
+
+## Project structure
+
+```text
+index.html, src/          Svelte 5 frontend (TypeScript + Tailwind v4)
+  src/components/         Wizard, DriveList, Dropzone, ConfirmModal, ...
+  src/lib/                IPC bridge (ipc.ts, types.ts), stores, i18n (EN/ES)
+src-tauri/                Rust backend (Tauri 2)
+  src/commands/           IPC commands: list_drives, flash, cancel_flash, eject
+  src/core/               3-stage pipeline: reader/writer/verifier, progress
+  src/image/              image detection + streaming decompression
+  src/platform/           per-OS device handling (linux / macos / windows)
+  src/safety.rs           hard refusals and device safety rules
+  src-tauri/tauri.conf.json, capabilities/
+.github/workflows/        ci.yml (manual) and release.yml (manual or v* tags)
+```
+
 ---
 
 ## Platform notes
@@ -172,9 +203,11 @@ contract.
   green before every commit block.
 - No `todo!()`, `unimplemented!()`, empty stubs, or `unwrap()` on device
   I/O paths.
-- The `.github/workflows` files are **prepared but inert**: they only run if
-  the owner publishes the repository manually. Distribution is entirely the
-  owner's decision.
+- The GitHub Actions workflows are defined but **inert for now**: `ci.yml`
+  only runs when triggered manually (`workflow_dispatch`) and `release.yml`
+  only runs manually or when the owner pushes a `v*` tag. Nothing runs on a
+  regular push — distribution and automation are entirely the owner's
+  decision.
 
 ---
 
@@ -245,6 +278,26 @@ cargo tauri build
 
 Permisos en Linux: ejecuta con `sudo` o instala la regla udev de arriba
 (`60-animabooter.rules`, grupo `plugdev`).
+
+### Estado de GitHub Actions
+
+La CI automática **no** está activada todavía: `ci.yml` solo se ejecuta
+manualmente (`workflow_dispatch`) y `release.yml` solo se ejecuta de forma
+manual o al subir un tag `v*`. Nada corre en un push normal a `main`.
+
+## Estructura del proyecto
+
+```text
+index.html, src/          Frontend Svelte 5 (TypeScript + Tailwind v4)
+  src/lib/                Puente IPC (ipc.ts, types.ts), stores, i18n (EN/ES)
+src-tauri/                Backend Rust (Tauri 2)
+  src/commands/           Comandos IPC: list_drives, flash, cancel_flash, eject
+  src/core/               Pipeline de 3 etapas: lector/escritor/verificador
+  src/image/              Detección de imagen y descompresión en streaming
+  src/platform/           Manejo de dispositivos por SO (linux/macos/windows)
+  src/safety.rs           Reglas duras de seguridad del dispositivo
+.github/workflows/        ci.yml (manual) y release.yml (manual o tags v*)
+```
 
 ## Hoja de ruta
 
