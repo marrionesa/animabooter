@@ -14,6 +14,11 @@ added as changes are made, not reconstructed afterwards.
 
 ## [0.1.0-alpha] - 2026-09-25
 
+Verification status at release: Linux is hardware-tested by the author
+(real flash + boot verified); Windows and macOS are CI-built but not yet
+hardware-tested. Binaries are unsigned (SmartScreen / Gatekeeper will
+warn on first run).
+
 ### Added
 
 - Flashing pipeline with three parallel stages (reader → writer → verifier),

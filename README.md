@@ -183,6 +183,20 @@ contract.
 
 ---
 
+## Verification status
+
+Honesty about what is actually tested is part of this project's ethos:
+
+| Platform | Compiles (CI) | Real flash + boot test |
+| --- | --- | --- |
+| Linux | ✅ fmt, clippy, tests, build | ✅ **verified by the author on hardware** (real flash, USB boots) |
+| Windows | ✅ tests + bundle (MSVC) | ⏳ not yet hardware-tested by the author |
+| macOS | ✅ tests + bundle (aarch64) | ⏳ not yet hardware-tested by the author |
+
+Release binaries are **unsigned**: Windows SmartScreen and macOS Gatekeeper
+will show a warning on first run (macOS: right-click → Open). Signing and
+notarization are planned once distribution becomes serious.
+
 ## Roadmap
 
 - **v0.1 (this release)** — parallel pipeline, free verification hash,
@@ -298,6 +312,22 @@ src-tauri/                Backend Rust (Tauri 2)
   src/safety.rs           Reglas duras de seguridad del dispositivo
 .github/workflows/        ci.yml (manual) y release.yml (manual o tags v*)
 ```
+
+## Estado de verificación
+
+La honestidad sobre qué está probado de verdad forma parte de la esencia
+de este proyecto:
+
+| Plataforma | Compila (CI) | Flasheo + arranque real |
+| --- | --- | --- |
+| Linux | ✅ fmt, clippy, tests, build | ✅ **verificado por el autor en hardware** (flasheo real, el USB arranca) |
+| Windows | ✅ tests + bundle (MSVC) | ⏳ aún sin prueba de hardware del autor |
+| macOS | ✅ tests + bundle (aarch64) | ⏳ aún sin prueba de hardware del autor |
+
+Los binarios de release están **sin firmar**: Windows SmartScreen y macOS
+Gatekeeper mostrarán un aviso en el primer arranque (macOS: clic derecho →
+Abrir). Firma y notarización están previstas cuando la distribución se
+vuelva seria.
 
 ## Hoja de ruta
 
