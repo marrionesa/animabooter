@@ -146,16 +146,17 @@ jobs:
         run: |
           set -e
 
+          REPO="marrionesa/animabooter"
           echo "Publishing release: $TAG"
 
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if gh release view -R "$REPO" "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists."
             echo "Uploading assets..."
-            gh release upload "$TAG" assets/* --clobber
+            gh release upload -R "$REPO" "$TAG" assets/* --clobber
           else
             echo "Release $TAG does not exist."
             echo "Creating release..."
-            gh release create "$TAG" assets/* \
+            gh release create -R "$REPO" "$TAG" assets/* \
               --title "AnimaBooter $TAG" \
               --generate-notes
           fi
