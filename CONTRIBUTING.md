@@ -15,28 +15,43 @@ short but strict — they are what keeps the project trustworthy.
    uncompressed size is unknown, show byte counters. If a flush fails,
    report failure. `sync_all` before "done", always.
 
-## Code standards
+## 1. Local development
+
+Clone and set up the toolchain (Rust stable, Bun or Node ≥ 18, plus the
+Tauri 2 system dependencies documented in the README):
+
+```bash
+bun install         # frontend dependencies
+bun run dev         # vite dev server
+cargo tauri dev     # full desktop app with live reload (from src-tauri/ or via `bun run tauri dev`)
+```
+
+The IPC contract lives twice on purpose (`src-tauri/src/commands/*.rs` ↔
+`src/lib/types.ts` + `src/lib/ipc.ts`). If you change one side, change the
+other in the same commit.
+
+## 2. Validations before committing
+
+Every commit block must pass all of these locally:
+
+```bash
+cargo fmt --check            # formatting (run in src-tauri/)
+cargo clippy -- -D warnings  # lints, warnings are errors
+cargo test                   # pipeline suites: progress math, throttle,
+                             # cancellation, 1-byte corruption, gzip roundtrip
+bun run check                # svelte-check, from the repo root
+bun run build                # vite production build
+```
+
+Code standards:
 
 - Rust, edition 2021. Comments and commit messages in **English**.
-- Gates before committing:
-  ```bash
-  cargo fmt --check
-  cargo clippy -- -D warnings
-  cargo test
-  bun run check    # svelte-check, from the repo root
-  bun run build    # vite build
-  ```
 - Forbidden: `todo!()`, `unimplemented!()`, empty stubs, `unwrap()`/`expect()`
   on device I/O paths (tests excepted), loading a whole image into RAM.
 - Errors crossing IPC implement `{ message, hint }` — every user-facing
   failure needs an actionable hint.
-- The IPC contract lives twice on purpose (`commands/*.rs` ↔
-  `src/lib/types.ts` + `src/lib/ipc.ts`). If you change one side, change the
-  other in the same commit.
 
-## Commits
-
-Conventional commits, one logical block per commit:
+Commits are conventional, one logical block each:
 
 ```text
 feat: parallel pipeline engine
@@ -46,7 +61,11 @@ docs: bilingual readme
 chore: project scaffold
 ```
 
-## Testing a real flash
+Note: there is **no automatic CI on push yet** — `ci.yml` only runs on
+manual `workflow_dispatch`, so the checks above are your safety net. Run
+them yourself.
+
+## 3. Testing on real hardware
 
 `cargo test` covers the engine without hardware. Before shipping a release,
 also do one **manual** run with a real USB stick you don't care about:
@@ -60,6 +79,22 @@ also do one **manual** run with a real USB stick you don't care about:
       published sha256 (for uncompressed images)
 - [ ] Export PNG + Copy summary work offline
 - [ ] Eject reports success
+
+Do this on every OS you intend to ship — the platform notes in the README
+(udev rules on Linux, elevation on Windows, `/dev/rdiskN` on macOS) apply.
+
+## 4. Release preparation
+
+Releases are built by `.github/workflows/release.yml`, which only runs when
+triggered manually (`workflow_dispatch`) or when the owner pushes a `v*`
+tag — never on a regular push. Before cutting a release:
+
+- [ ] All validations in section 2 pass.
+- [ ] The hardware checklist in section 3 is done for the target platforms.
+- [ ] `CHANGELOG.md` has a section for the version.
+- [ ] Version numbers (`package.json`, `src-tauri/tauri.conf.json`,
+      `src-tauri/Cargo.toml`) are consistent.
+- [ ] Tagging, pushing and publishing are done **manually by the owner**.
 
 ## Performance numbers
 
