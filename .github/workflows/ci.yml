@@ -22,7 +22,8 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - uses: oven-sh/setup-bun@v2
+      - name: Enable pnpm
+        run: corepack enable
 
       - name: Rust checks
         working-directory: src-tauri
@@ -33,9 +34,9 @@ jobs:
 
       - name: Frontend checks
         run: |
-          bun install
-          bun run check
-          bun run build
+          pnpm install --frozen-lockfile
+          pnpm check
+          pnpm build
 
   windows:
     runs-on: windows-latest
