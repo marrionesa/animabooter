@@ -142,7 +142,7 @@ fn raw_device_path(path: &Path) -> PathBuf {
     }
 }
 
-pub use crate::platform::unix_common::open_unix_pair;
+use crate::platform::unix_common::open_unix_pair;
 
 /// Open the RAW device pair (rdiskN). See `raw_device_path` for why.
 pub fn open_target_pair(
