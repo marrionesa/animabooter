@@ -26,20 +26,31 @@ verification hashing**.
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshot-wizard.png" width="48%" alt="AnimaBooter wizard — image dropzone with the reactive mascot" title="Step 1 — pick your image">
-  <img src="docs/screenshot-help.png" width="48%" alt="AnimaBooter help dialog — how it works" title="Built-in help & about">
+  <img src="docs/screenshots/00-box.jpg" width="220" alt="AnimaBooter box art" title="AnimaBooter box art"/>
 </p>
 
-<p align="center"><sub>The wizard, step 1 — drop an image on the mascot — and the built-in help dialog. Interface in English and Spanish, three themes.</sub></p>
+<p align="center">
+  <img src="docs/screenshots/01-image.png" width="32%" alt="Step 1 — drop a disk image on the mascot" title="1 · Image — drop an .iso / .img / compressed image"/>
+  <img src="docs/screenshots/02-drive.png" width="32%" alt="Step 2 — choose the target drive" title="2 · Drive — removable drives only, with serial + bus info"/>
+  <img src="docs/screenshots/03-confirm.png" width="32%" alt="Step 3 — destruction confirmation" title="3 · Confirm — everything that will be destroyed, in the open"/>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/04-writing.png" width="32%" alt="Step 4 — writing with speed, peak and ETA" title="4 · Write — live speed, peak and ETA"/>
+  <img src="docs/screenshots/05-log.png" width="32%" alt="Step 4 — live log with every safety and pipeline step" title="Live log — every destructive step announces itself first"/>
+  <img src="docs/screenshots/06-done.png" width="32%" alt="Flash complete — result card with stats" title="Done — avg/peak speed, duration, verification"/>
+</p>
+
+<p align="center"><sub>The four-step wizard: image → drive → confirm → write. Interface in English and Spanish, three themes, reactive mascot included.</sub></p>
 
 ## Install
 
 Grab a bundle from the [**v0.1.0 release**](https://github.com/marrionesa/animabooter/releases)
 — NSIS installer (Windows), `.dmg` (macOS, aarch64), `.deb`/AppImage (Linux).
 
-> ⚠️ **Alpha software** that writes to raw devices — double-check the target
-> drive. Binaries are unsigned: SmartScreen / Gatekeeper will warn on first
-> run (macOS: right-click → Open).
+> ⚠️ **Early-release software** that writes to raw devices — double-check the
+> target drive. Binaries are unsigned: SmartScreen / Gatekeeper will warn on
+> first run (macOS: right-click → Open).
 > See the [verification status](#verification-status) for what is actually
 > hardware-tested.
 
@@ -278,7 +289,7 @@ desconocido, la UI muestra contadores reales en vez de un porcentaje falso.
 Descarga un bundle de la [**release v0.1.0**](https://github.com/marrionesa/animabooter/releases)
 — instalador NSIS (Windows), `.dmg` (macOS, aarch64), `.deb`/AppImage (Linux).
 
-> ⚠️ **Software alpha** que escribe en dispositivos en crudo — revisa dos
+> ⚠️ **Software en versión temprana** que escribe en dispositivos en crudo — revisa dos
 > veces la unidad destino. Los binarios van sin firmar: SmartScreen /
 > Gatekeeper avisarán en el primer arranque (macOS: clic derecho → Abrir).
 > Consulta el [estado de verificación](#estado-de-verificación) para saber
@@ -330,6 +341,10 @@ Los binarios de release están **sin firmar**: Windows SmartScreen y macOS
 Gatekeeper mostrarán un aviso en el primer arranque (macOS: clic derecho →
 Abrir). Firma y notarización están previstas cuando la distribución se
 vuelva seria.
+
+## Capturas
+
+Mira la galería completa en la [sección Screenshots](#screenshots) — asistente de 4 pasos (imagen → unidad → confirmar → escribir), registro en vivo y tarjeta de resultados.
 
 ## Hoja de ruta
 
