@@ -136,7 +136,12 @@ jobs:
       - name: Flatten assets
         run: |
           mkdir -p assets
-          find release-upload -type f -exec cp -v {} assets/ \;
+          # Only real installers, prefixed with the platform to avoid
+          # name collisions between bundles (icons etc. are dropped).
+          find release-upload -type f -regex '.*\.\(exe\|msi\|dmg\|deb\|rpm\|AppImage\|AppImage\.tar\.gz\)' | while read -r f; do
+            platform=$(echo "$f" | cut -d/ -f2)
+            cp -v "$f" "assets/${platform}_$(basename "$f")"
+          done
           ls -la assets/
 
       - name: Publish release
