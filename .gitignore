@@ -16,3 +16,6 @@ src-tauri/gen/
 
 # Local scratch
 dev.log
+
+# Local archives / temporary release bundles
+*.tar.xz
