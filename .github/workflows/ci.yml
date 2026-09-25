@@ -6,12 +6,23 @@ name: ci
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag de release a publicar"
+        required: true
+        default: "v0.1.0"
+
+permissions:
+  contents: write
 
 jobs:
   linux:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Install system dependencies
         run: |
@@ -38,22 +49,111 @@ jobs:
           pnpm check
           pnpm build
 
+      - name: Build Linux bundle
+        run: |
+          pnpm tauri build --target x86_64-unknown-linux-gnu
+
+      - name: Upload Linux bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: animabooter-linux
+          path: src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*
+          retention-days: 14
+
   windows:
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Rust tests
         working-directory: src-tauri
         run: cargo test
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Build Windows bundle
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm tauri build --target x86_64-pc-windows-msvc
+
+      - name: Upload Windows bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: animabooter-windows
+          path: src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*
+          retention-days: 14
 
   macos:
     runs-on: macos-latest
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
 
       - name: Rust tests
         working-directory: src-tauri
         run: cargo test
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Build macOS bundle
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm tauri build --target aarch64-apple-darwin
+
+      - name: Upload macOS bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: animabooter-macos
+          path: src-tauri/target/aarch64-apple-darwin/release/bundle/**/*
+          retention-days: 14
+
+  publish:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - linux
+      - windows
+      - macos
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-upload
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -e
+
+          echo "Publishing release: $TAG"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists."
+            echo "Uploading assets..."
+
+            find release-upload -type f -print0 | \
+              xargs -0 -r gh release upload "$TAG" --clobber
+          else
+            echo "Release $TAG does not exist."
+            echo "Creating release..."
+
+            gh release create "$TAG" \
+              release-upload/**/* \
+              --title "AnimaBooter $TAG" \
+              --generate-notes
+          fi
