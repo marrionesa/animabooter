@@ -25,18 +25,17 @@ use std::path::Path;
 use std::process::Command;
 
 use windows::core::{HSTRING, PCWSTR};
-use windows::Win32::Foundation::{CloseHandle, HANDLE};
-use windows::Win32::Security::{
-    GetTokenInformation, OpenProcessToken, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY,
-};
+use windows::Win32::Foundation::{CloseHandle, GENERIC_READ, GENERIC_WRITE, HANDLE};
+use windows::Win32::Security::{GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY};
 use windows::Win32::Storage::FileSystem::{
-    CreateFileW, FILE_FLAG_NO_BUFFERING, FILE_SHARE_READ, FILE_SHARE_WRITE, FSCTL_DISMOUNT_VOLUME,
-    FSCTL_LOCK_VOLUME, GENERIC_READ, GENERIC_WRITE, IOCTL_STORAGE_EJECT_MEDIA,
-    IOCTL_STORAGE_GET_DEVICE_NUMBER, OPEN_EXISTING,
+    CreateFileW, FILE_FLAG_NO_BUFFERING, FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING,
 };
-use windows::Win32::Storage::IOCTL_STORAGE_QUERY_PROPERTY;
-use windows::Win32::System::Ioctl::{IOCTL_DISK_GET_DRIVE_GEOMETRY, IOCTL_DISK_GET_LENGTH_INFO};
-use windows::Win32::System::Threading::GetCurrentProcess;
+use windows::Win32::System::Ioctl::{
+    FSCTL_DISMOUNT_VOLUME, FSCTL_LOCK_VOLUME, IOCTL_DISK_GET_DRIVE_GEOMETRY,
+    IOCTL_DISK_GET_LENGTH_INFO, IOCTL_STORAGE_EJECT_MEDIA, IOCTL_STORAGE_GET_DEVICE_NUMBER,
+    IOCTL_STORAGE_QUERY_PROPERTY,
+};
+use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 use windows::Win32::System::IO::DeviceIoControl;
 
 use crate::core::writer::{BlockReader, BlockWriter};
@@ -55,6 +54,7 @@ fn werr(e: windows::core::Error) -> AppError {
     }
 }
 
+#[allow(dead_code)] // kept for future read-back error mapping
 fn io_err(e: io::Error) -> AppError {
     AppError::Device {
         message: format!("device I/O error: {e}"),
@@ -258,7 +258,7 @@ fn drive_properties(physical: u32) -> Option<DriveProperties> {
     // StorageDeviceProperty descriptor (variable length, 1 KiB is plenty).
     // The query buffer encodes STORAGE_PROPERTY_QUERY with zeroed fields:
     // PropertyId = 0 (StorageDeviceProperty), QueryType = 0 (StandardQuery).
-    let mut query = [0u8; 8];
+    let query = [0u8; 8];
     let mut out = [0u8; 1024];
     let mut props: DriveProperties = (String::new(), String::new(), String::new(), 0, false, size);
     if ioctl(
@@ -476,7 +476,7 @@ impl BlockReader for WindowsReader {
             ));
         }
 
-        let attempt = |file: &std::fs::File, len: usize| -> std::io::Result<usize> {
+        let mut attempt = |mut file: &std::fs::File, len: usize| -> std::io::Result<usize> {
             let mut filled = 0usize;
             file.seek(std::io::SeekFrom::Start(offset))?;
             while filled < len {
