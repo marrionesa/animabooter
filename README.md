@@ -1,24 +1,49 @@
-# [AnimaBooter](https://github.com/marrionesa/animabooter)
+<div align="center">
+
+# AnimaBooter
 
 **Flash USB drives with soul** · *Flashea tu USB con alma*
 
-A tiny, honest, open-source, cross-platform USB image flasher created by
-[@marrionesa](https://github.com/marrionesa) — the small footprint of
-usbimager, the UX polish of Etcher, and a technical edge that neither has:
-a **parallel 3-stage flash pipeline** with **free verification hashing**.
+A tiny, honest, open-source, cross-platform USB image flasher — the small
+footprint of usbimager, the UX polish of Etcher, and a technical edge
+neither has: a **parallel 3-stage flash pipeline** with **free
+verification hashing**.
 
-- Backend: **Rust** (Tauri 2, tokio)
-- Frontend: **Svelte 5 + TypeScript + Tailwind CSS v4**
-- Platforms: **Windows / macOS / Linux**
-- Project: [github.com/marrionesa/animabooter](https://github.com/marrionesa/animabooter)
-- Creator: [marrionesa](https://github.com/marrionesa)
-- License: **MIT** (c) 2026 [marrionesa](https://github.com/marrionesa)
-- Privacy: **100% local** — no telemetry, no cloud, no accounts, no network
-  calls at runtime. Ever.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/badge/release-v0.1.0--alpha-orange.svg)](CHANGELOG.md)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
+![Telemetry](https://img.shields.io/badge/telemetry-none-brightgreen.svg)
+![Made with Rust](https://img.shields.io/badge/Rust-Tauri%202-dea584.svg)
+![Svelte 5](https://img.shields.io/badge/Svelte%205-TypeScript-ff3e00.svg)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](CONTRIBUTING.md)
+
+**[Features](#why-animabooter) · [Screenshots](#screenshots) · [Install](#install) · [Build from source](#build-from-source-100-local) · [Verificación (ES)](#animabooter-es)**
+
+</div>
 
 ---
 
-## Why [AnimaBooter](https://github.com/marrionesa/animabooter)
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshot-wizard.png" width="48%" alt="AnimaBooter wizard — image dropzone with the reactive mascot" title="Step 1 — pick your image">
+  <img src="docs/screenshot-help.png" width="48%" alt="AnimaBooter help dialog — how it works" title="Built-in help & about">
+</p>
+
+<p align="center"><sub>The wizard, step 1 — drop an image on the mascot — and the built-in help dialog. Interface in English and Spanish, three themes.</sub></p>
+
+## Install
+
+Grab a bundle from the [**v0.1.0-alpha release**](https://github.com/marrionesa/animabooter/releases)
+— NSIS installer (Windows), `.dmg` (macOS, aarch64), `.deb`/AppImage (Linux).
+
+> ⚠️ **Alpha software** that writes to raw devices — double-check the target
+> drive. Binaries are unsigned: SmartScreen / Gatekeeper will warn on first
+> run (macOS: right-click → Open).
+> See the [verification status](#verification-status) for what is actually
+> hardware-tested.
+
+## Why AnimaBooter?
 
 Etcher is sequential: it reads, writes and verifies in a queue, and
 verification re-reads, re-decompresses and re-hashes everything.
@@ -46,6 +71,8 @@ Honesty guarantees:
 - The image is **never** fully loaded into RAM.
 - When the decompressed size of a compressed image is unknown, the UI shows
   live byte counters instead of a made-up percentage.
+- **100% local**: no telemetry, no cloud, no accounts, no network calls at
+  runtime. Ever.
 
 ### Comparison
 
@@ -60,7 +87,7 @@ Honesty guarantees:
 
 > Benchmark cells for [AnimaBooter](https://github.com/marrionesa/animabooter) are **targets**, not claims. We publish
 > only real, self-measured numbers — measure yourself and fill in your own
-> results (`cargo test && cargo tauri build`, then time a real flash on real
+> results (`cargo test && pnpm tauri build`, then time a real flash on real
 > hardware). Same image, same drive, same port.
 
 ### Security as a feature
@@ -78,14 +105,26 @@ Honesty guarantees:
   fire on a misclick. Cancelling a flash warns that the device is left in an
   unknown state and must be re-flashed.
 
----
+### Verification status
+
+Honesty about what is actually tested is part of this project's ethos:
+
+| Platform | Compiles (CI) | Real flash + boot test |
+| --- | --- | --- |
+| Linux | ✅ fmt, clippy, tests, build | ✅ **verified by the author on hardware** (real flash, USB boots) |
+| Windows | ✅ tests + bundle (MSVC) | ⏳ not yet hardware-tested by the author |
+| macOS | ✅ tests + bundle (aarch64) | ⏳ not yet hardware-tested by the author |
+
+Release binaries are **unsigned**: Windows SmartScreen and macOS Gatekeeper
+will show a warning on first run (macOS: right-click → Open). Signing and
+notarization are planned once distribution becomes serious.
 
 ## Build from source (100% local)
 
 ### Prerequisites
 
 - **Rust** stable (edition 2021) via your own toolchain manager
-- **Bun** or Node ≥ 18 (frontend tooling)
+- **pnpm** ≥ 9 (or Bun / Node ≥ 18 — the lockfile is `pnpm-lock.yaml`)
 - Tauri 2 system dependencies:
   - **Linux**: `libudev` + `libwebkit2gtk-4.1-dev` + `libgtk-3-dev`
     (Debian/Ubuntu: `sudo apt install libwebkit2gtk-4.1-dev build-essential libudev-dev libgtk-3-dev`)
@@ -95,19 +134,20 @@ Honesty guarantees:
 ### Commands
 
 ```bash
-bun install            # or: npm install
-bun run check          # svelte-check, must be clean
-bun run build          # vite production build
+pnpm install           # install frontend dependencies
+pnpm check             # svelte-check, must be clean
+pnpm build             # vite production build
 cd src-tauri
 cargo clippy -- -D warnings
 cargo test             # pipeline suites: progress math, throttle 200 ms,
                        # cancellation, 1-byte corruption, gzip roundtrip
-cargo tauri build      # or: cd .. && npm run tauri build
+cd ..
+pnpm tauri build       # bundles for your platform
 ```
 
 The Windows build additionally needs the icon set (already generated in
 `src-tauri/icons/`, including `icon.ico` / `icon.icns`). To regenerate from
-`src-tauri/icons/source artwork`, run: `bunx tauri icon <png>`.
+new source artwork, run: `pnpm tauri icon <png>`.
 
 ### Linux device permissions
 
@@ -121,21 +161,6 @@ KERNEL=="sd*", ATTRS{removable}=="1", SUBSYSTEM=="block", MODE="0660", GROUP="pl
 ```
 
 Then: `sudo udevadm control --reload && sudo udevadm trigger`.
-
-### GitHub Actions status
-
-CI automation is currently **not** running automatically:
-
-- `.github/workflows/ci.yml` — manual only (`workflow_dispatch`): runs
-  `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test` and the
-  frontend checks (`svelte-check`, `vite build`) on Linux, plus Rust tests on
-  Windows and macOS. All local validation is expected to be run by hand.
-- `.github/workflows/release.yml` — manual (`workflow_dispatch`) **or** a
-  pushed `v*` tag; builds the platform bundles and uploads them as workflow
-  artifacts. It never runs on a normal push to `main`.
-
-Automatic CI on push/PR is planned for the public launch but is not enabled
-yet.
 
 ## Project structure
 
@@ -153,8 +178,6 @@ src-tauri/                Rust backend (Tauri 2)
 .github/workflows/        ci.yml (manual) and release.yml (manual or v* tags)
 ```
 
----
-
 ## Platform notes
 
 - **Windows**: flashing raw devices requires elevation. Without admin rights
@@ -169,8 +192,6 @@ src-tauri/                Rust backend (Tauri 2)
   unmounted via `udisksctl` or the flash is rejected with the mount list so
   you can retry.
 
----
-
 ## IPC contract (summary)
 
 Commands: `list_drives`, `detect_image`, `flash`, `cancel_flash`, `eject`,
@@ -180,22 +201,6 @@ Events: `flash://phase`, `flash://progress`, `flash://verify`,
 `flash://log`, `flash://done`, `flash://error`. All payloads are mirrored
 1:1 in `src/lib/types.ts` — keep both sides in sync when touching the
 contract.
-
----
-
-## Verification status
-
-Honesty about what is actually tested is part of this project's ethos:
-
-| Platform | Compiles (CI) | Real flash + boot test |
-| --- | --- | --- |
-| Linux | ✅ fmt, clippy, tests, build | ✅ **verified by the author on hardware** (real flash, USB boots) |
-| Windows | ✅ tests + bundle (MSVC) | ⏳ not yet hardware-tested by the author |
-| macOS | ✅ tests + bundle (aarch64) | ⏳ not yet hardware-tested by the author |
-
-Release binaries are **unsigned**: Windows SmartScreen and macOS Gatekeeper
-will show a warning on first run (macOS: right-click → Open). Signing and
-notarization are planned once distribution becomes serious.
 
 ## Roadmap
 
@@ -208,22 +213,15 @@ notarization are planned once distribution becomes serious.
   flash in one click (opt-in, the user stays in control of the network —
   the app itself never phones home).
 
----
+## Contributing & resources
 
-## Repository hygiene
-
-- Conventional commits, code comments in English.
-- `cargo fmt --check && cargo clippy -- -D warnings && cargo test` must be
-  green before every commit block.
-- No `todo!()`, `unimplemented!()`, empty stubs, or `unwrap()` on device
-  I/O paths.
-- The GitHub Actions workflows are defined but **inert for now**: `ci.yml`
-  only runs when triggered manually (`workflow_dispatch`) and `release.yml`
-  only runs manually or when the owner pushes a `v*` tag. Nothing runs on a
-  regular push — distribution and automation are entirely the owner's
-  decision.
-
----
+- [Contributing guide](CONTRIBUTING.md) — rules, validation checklist and
+  hardware test protocol.
+- [Security policy](SECURITY.md) — supported versions and how to report a
+  vulnerability responsibly.
+- [Changelog](CHANGELOG.md) — history of public releases.
+- CI is intentionally manual for now (`workflow_dispatch`); automatic CI on
+  push/PR comes with the public launch.
 
 ## License
 
@@ -235,16 +233,13 @@ MIT — see [LICENSE](LICENSE). Open source software made with soul by [marrione
 
 **Flashea tu USB con alma**
 
-Un flasheador de imágenes USB pequeño, honesto, de código abierto y multiplataforma, creado por [marrionesa](https://github.com/marrionesa). Lo pequeño
-de usbimager, la UX de Etcher y una ventaja técnica que ninguno tiene: un
-**pipeline paralelo de 3 etapas** con **hash de verificación gratis**.
+Un flasheador de imágenes USB pequeño, honesto, de código abierto y multiplataforma, creado por [marrionesa](https://github.com/marrionesa). Lo pequeño de usbimager, la UX de Etcher y una ventaja técnica que ninguno tiene: un **pipeline paralelo de 3 etapas** con **hash de verificación gratis**.
 
 - Backend **Rust** (Tauri 2, tokio) · Frontend **Svelte 5 + Tailwind v4**
 - Proyecto: [github.com/marrionesa/animabooter](https://github.com/marrionesa/animabooter)
 - Creador: [marrionesa](https://github.com/marrionesa)
 - Plataformas: **Windows / macOS / Linux** · Licencia **MIT** (c) 2026 [marrionesa](https://github.com/marrionesa)
-- Privacidad: **100% local** — sin telemetría, sin nube, sin cuentas, sin
-  llamadas de red en ejecución. Nunca.
+- Privacidad: **100% local** — sin telemetría, sin nube, sin cuentas, sin llamadas de red en ejecución. Nunca.
 
 ## Cómo funciona
 
@@ -278,31 +273,38 @@ desconocido, la UI muestra contadores reales en vez de un porcentaje falso.
 - El botón destructivo usa **hold-to-confirm de 1,2 s**. Cancelar avisa de
   que la unidad queda en estado desconocido y debe re-flashearse.
 
+## Instalación
+
+Descarga un bundle de la [**release v0.1.0-alpha**](https://github.com/marrionesa/animabooter/releases)
+— instalador NSIS (Windows), `.dmg` (macOS, aarch64), `.deb`/AppImage (Linux).
+
+> ⚠️ **Software alpha** que escribe en dispositivos en crudo — revisa dos
+> veces la unidad destino. Los binarios van sin firmar: SmartScreen /
+> Gatekeeper avisarán en el primer arranque (macOS: clic derecho → Abrir).
+> Consulta el [estado de verificación](#estado-de-verificación) para saber
+> qué está probado en hardware de verdad.
+
 ## Compilar desde fuente
 
-Prerrequisitos: toolchain Rust estable, Bun/Node, y las dependencias de
-sistema de Tauri 2 (Linux: `libudev` + `libwebkit2gtk-4.1-dev`;
-Windows: VS Build Tools + WebView2; macOS: Xcode CLT).
+Prerrequisitos: toolchain Rust estable, **pnpm** ≥ 9 (o Bun/Node ≥ 18), y
+las dependencias de sistema de Tauri 2 (Linux: `libudev` +
+`libwebkit2gtk-4.1-dev`; Windows: VS Build Tools + WebView2; macOS:
+Xcode CLT).
 
 ```bash
-bun install && bun run check && bun run build
+pnpm install && pnpm check && pnpm build
 cd src-tauri && cargo clippy -- -D warnings && cargo test
-cargo tauri build
+cd .. && pnpm tauri build
 ```
 
-Permisos en Linux: ejecuta con `sudo` o instala la regla udev de arriba
-(`60-animabooter.rules`, grupo `plugdev`).
-
-### Estado de GitHub Actions
-
-La CI automática **no** está activada todavía: `ci.yml` solo se ejecuta
-manualmente (`workflow_dispatch`) y `release.yml` solo se ejecuta de forma
-manual o al subir un tag `v*`. Nada corre en un push normal a `main`.
+Permisos en Linux: ejecuta con `sudo` o instala la regla udev de la
+sección inglesa (`60-animabooter.rules`, grupo `plugdev`).
 
 ## Estructura del proyecto
 
 ```text
 index.html, src/          Frontend Svelte 5 (TypeScript + Tailwind v4)
+  src/components/         Wizard, DriveList, Dropzone, ConfirmModal, ...
   src/lib/                Puente IPC (ipc.ts, types.ts), stores, i18n (EN/ES)
 src-tauri/                Backend Rust (Tauri 2)
   src/commands/           Comandos IPC: list_drives, flash, cancel_flash, eject
@@ -337,6 +339,14 @@ vuelva seria.
   flasheada vía hash parcial), CLI `animactl`.
 - **v0.3 (previsto)** — catálogo de distros descarga+flash (con consentimiento
   explícito del usuario; la app nunca se conecta por su cuenta).
+
+## Contribuir y recursos
+
+- [Guía de contribución](CONTRIBUTING.md) — reglas, checklist de validación
+  y protocolo de prueba en hardware.
+- [Política de seguridad](SECURITY.md) — versiones soportadas y cómo
+  reportar una vulnerabilidad de forma responsable.
+- [Changelog](CHANGELOG.md) — historial de releases públicas.
 
 ## Licencia
 
