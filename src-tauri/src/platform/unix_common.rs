@@ -36,12 +36,11 @@ impl BlockReader for UnixBlockReader {
     }
 }
 
+type OpenedPair = Result<(Box<dyn BlockWriter>, Box<dyn BlockReader>), AppError>;
+
 /// Open one write handle and one separate read-back handle.
 /// `sink` receives an audit line about the destructive open.
-pub fn open_unix_pair(
-    path: &Path,
-    sink: &dyn crate::core::EventSink,
-) -> Result<(Box<dyn BlockWriter>, Box<dyn BlockReader>), AppError> {
+pub fn open_unix_pair(path: &Path, sink: &dyn crate::core::EventSink) -> OpenedPair {
     sink.log(format!(
         "device: opening {path:?} for exclusive destructive write"
     ));

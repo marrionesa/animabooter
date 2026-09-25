@@ -88,15 +88,15 @@ struct Block {
     data: Vec<u8>,
 }
 
+type OpenedSource = Result<(Box<dyn Read + Send>, ImageKind, Option<u64>), AppError>;
+
 struct WriterStats {
     written: u64,
     peak_mbs: f64,
 }
 
 /// Open the source image and figure out kind + estimated uncompressed size.
-fn open_source(
-    spec: &SourceSpec,
-) -> Result<(Box<dyn Read + Send>, ImageKind, Option<u64>), AppError> {
+fn open_source(spec: &SourceSpec) -> OpenedSource {
     match spec {
         SourceSpec::Bytes(bytes, kind) => {
             // In-memory sources (tests, IPC-uploaded images) go through the
@@ -277,64 +277,57 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
                     let mut tracker = SpeedTracker::new();
                     let mut emitter = ProgressEmitter::new(PROGRESS_THROTTLE);
                     let mut written: u64 = 0;
-                    loop {
-                        match block_rx.recv() {
-                            Ok(block) => {
-                                if cancel.is_cancelled() {
-                                    drain_blocks(block_rx);
-                                    return Err(AppError::Cancelled);
-                                }
-                                match writer.write_at(block.offset, &block.data) {
-                                    Ok(()) => {}
-                                    Err(e) => {
-                                        drain_blocks(block_rx);
-                                        return Err(AppError::Device {
-                                            message: format!(
-                                                "write failed at offset {}: {e}",
-                                                block.offset
-                                            ),
-                                            hint: Some(HINT_UNKNOWN_STATE.to_string()),
-                                        });
-                                    }
-                                }
-                                // Tell the verifier this region is durable.
-                                if verify {
-                                    let span = WriteSpan {
-                                        offset: block.offset,
-                                        len: block.data.len() as u32,
-                                    };
-                                    if span_tx.send(span).is_err() {
-                                        // Verifier gone (cancel/error): stop.
-                                        drain_blocks(block_rx);
-                                        return Err(AppError::Cancelled);
-                                    }
-                                }
-                                written += block.data.len() as u64;
-                                total_written.store(written, Ordering::SeqCst);
-
-                                let now = Instant::now();
-                                let window = tracker.sample(now, written);
-                                if emitter.should_emit(now) {
-                                    let eta_secs = match (total, window) {
-                                        (Some(t), w) if w > 0.0 && t > written => Some(
-                                            ((t - written) as f64
-                                                / (w * crate::core::progress::MIB))
-                                                .max(0.0),
-                                        ),
-                                        _ => None,
-                                    };
-                                    sink.progress(&ProgressPayload {
-                                        written,
-                                        total,
-                                        speed_mbs: window,
-                                        eta_secs,
-                                        percent: total.map(|t| {
-                                            ((written as f64 / t as f64) * 100.0).min(100.0)
-                                        }),
-                                    });
-                                }
+                    while let Ok(block) = block_rx.recv() {
+                        if cancel.is_cancelled() {
+                            drain_blocks(block_rx);
+                            return Err(AppError::Cancelled);
+                        }
+                        match writer.write_at(block.offset, &block.data) {
+                            Ok(()) => {}
+                            Err(e) => {
+                                drain_blocks(block_rx);
+                                return Err(AppError::Device {
+                                    message: format!(
+                                        "write failed at offset {}: {e}",
+                                        block.offset
+                                    ),
+                                    hint: Some(HINT_UNKNOWN_STATE.to_string()),
+                                });
                             }
-                            Err(_) => break, // reader finished and channel closed
+                        }
+                        // Tell the verifier this region is durable.
+                        if verify {
+                            let span = WriteSpan {
+                                offset: block.offset,
+                                len: block.data.len() as u32,
+                            };
+                            if span_tx.send(span).is_err() {
+                                // Verifier gone (cancel/error): stop.
+                                drain_blocks(block_rx);
+                                return Err(AppError::Cancelled);
+                            }
+                        }
+                        written += block.data.len() as u64;
+                        total_written.store(written, Ordering::SeqCst);
+
+                        let now = Instant::now();
+                        let window = tracker.sample(now, written);
+                        if emitter.should_emit(now) {
+                            let eta_secs = match (total, window) {
+                                (Some(t), w) if w > 0.0 && t > written => Some(
+                                    ((t - written) as f64 / (w * crate::core::progress::MIB))
+                                        .max(0.0),
+                                ),
+                                _ => None,
+                            };
+                            sink.progress(&ProgressPayload {
+                                written,
+                                total,
+                                speed_mbs: window,
+                                eta_secs,
+                                percent: total
+                                    .map(|t| ((written as f64 / t as f64) * 100.0).min(100.0)),
+                            });
                         }
                     }
                     if cancel.is_cancelled() {
@@ -413,10 +406,7 @@ pub fn run(job: PipelineJob, sink: Arc<dyn EventSink>) -> Result<PipelineResult,
     // ---------- Join & decide ----------
     let reader_result = join_worker(reader_handle, hash_rx, "reader");
     let writer_result = join_worker(writer_handle, stats_rx, "writer");
-    let verifier_result = match verifier_handle {
-        Some(handle) => Some(join_worker(handle, ver_rx, "verifier")),
-        None => None,
-    };
+    let verifier_result = verifier_handle.map(|handle| join_worker(handle, ver_rx, "verifier"));
 
     // Each worker sends a Result over its channel, and join_worker wraps that
     // in another Result for thread-crash/early-death cases — flatten the two

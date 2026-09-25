@@ -43,13 +43,8 @@ pub fn run_verify(
     let mut checked: u64 = 0;
     let mut buffer = vec![0u8; BLOCK_SIZE];
 
-    loop {
-        let span = match spans.recv() {
-            Ok(span) => span,
-            // Channel closed and fully drained: the writer is done.
-            Err(_) => break,
-        };
-
+    // Channel closed and fully drained: the writer is done.
+    while let Ok(span) = spans.recv() {
         if cancel.is_cancelled() {
             drain_spans(spans);
             return Err(AppError::Cancelled);
