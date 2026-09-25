@@ -1,7 +1,7 @@
 {
   "name": "animabooter",
   "private": true,
-  "version": "0.1.0-alpha",
+  "version": "0.1.0",
   "description": "Flash USB drives with soul",
   "author": "marrionesa",
   "license": "MIT",

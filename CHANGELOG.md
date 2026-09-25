@@ -12,7 +12,7 @@ added as changes are made, not reconstructed afterwards.
 
 ### Fixed
 
-## [0.1.0-alpha] - 2026-09-25
+## [0.1.0] - 2026-09-25
 
 Verification status at release: Linux is hardware-tested by the author
 (real flash + boot verified); Windows and macOS are CI-built but not yet

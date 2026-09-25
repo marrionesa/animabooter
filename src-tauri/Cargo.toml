@@ -1,6 +1,6 @@
 [package]
 name = "animabooter"
-version = "0.1.0-alpha"
+version = "0.1.0"
 description = "Flash USB drives with soul — a tiny, honest, cross-platform USB imager"
 authors = ["marrionesa"]
 license = "MIT"

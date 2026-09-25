@@ -10,7 +10,7 @@ neither has: a **parallel 3-stage flash pipeline** with **free
 verification hashing**.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v0.1.0--alpha-orange.svg)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](CHANGELOG.md)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 ![Telemetry](https://img.shields.io/badge/telemetry-none-brightgreen.svg)
 ![Made with Rust](https://img.shields.io/badge/Rust-Tauri%202-dea584.svg)
@@ -34,7 +34,7 @@ verification hashing**.
 
 ## Install
 
-Grab a bundle from the [**v0.1.0-alpha release**](https://github.com/marrionesa/animabooter/releases)
+Grab a bundle from the [**v0.1.0 release**](https://github.com/marrionesa/animabooter/releases)
 — NSIS installer (Windows), `.dmg` (macOS, aarch64), `.deb`/AppImage (Linux).
 
 > ⚠️ **Alpha software** that writes to raw devices — double-check the target
@@ -275,7 +275,7 @@ desconocido, la UI muestra contadores reales en vez de un porcentaje falso.
 
 ## Instalación
 
-Descarga un bundle de la [**release v0.1.0-alpha**](https://github.com/marrionesa/animabooter/releases)
+Descarga un bundle de la [**release v0.1.0**](https://github.com/marrionesa/animabooter/releases)
 — instalador NSIS (Windows), `.dmg` (macOS, aarch64), `.deb`/AppImage (Linux).
 
 > ⚠️ **Software alpha** que escribe en dispositivos en crudo — revisa dos
