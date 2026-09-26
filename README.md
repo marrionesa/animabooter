@@ -1,39 +1,26 @@
 <div align="center">
 
-<p>
-  <img src="docs/screenshots/00-box.jpg" width="220" alt="AnimaBooter box art" title="AnimaBooter box art"/>
-</p>
+<img src="docs/screenshots/00-box.jpg" width="180" alt="AnimaBooter" title="AnimaBooter"/>
 
-<h1>AnimaBooter</h1>
+# AnimaBooter
 
-<strong>Flash USB drives with soul</strong> · <em>Flashea tu USB con alma</em>
+**Flash USB drives with soul** · *Flashea tu USB con alma*
 
-<p>
-  A tiny, honest, open-source, cross-platform USB image flasher — the small
-  footprint of usbimager, the UX polish of Etcher, and a technical edge
-  neither has: a <strong>parallel 3-stage flash pipeline</strong> with <strong>free
-  verification hashing</strong>.
-</p>
+A tiny, honest, open-source, cross-platform USB image flasher — the small
+footprint of usbimager, the UX polish of Etcher, and a technical edge
+neither has: a **parallel 3-stage flash pipeline** with **free verification
+hashing**.
 
-<p>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/release-v0.1.0-blue.svg" alt="Release"></a>
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/telemetry-none-brightgreen.svg" alt="Telemetry">
-  <img src="https://img.shields.io/badge/Rust-Tauri%202-dea584.svg" alt="Made with Rust">
-  <img src="https://img.shields.io/badge/Svelte%205-TypeScript-ff3e00.svg" alt="Svelte 5">
-  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4.svg" alt="PRs Welcome"></a>
-</p>
+**[Download](https://github.com/marrionesa/animabooter/releases) · [Features](#why-animabooter) · [Screenshots](#screenshots) · [Build](#build-from-source-100-local) · [Website](https://marrionesa.github.io/animabooter-website/)**
 
-<p>
-  <strong>
-    <a href="#why-animabooter">Features</a> ·
-    <a href="#screenshots">Screenshots</a> ·
-    <a href="#install">Install</a> ·
-    <a href="#build-from-source-100-local">Build from source</a> ·
-    <a href="#animabooter-es">Verificación (ES)</a>
-  </strong>
-</p>
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Release](https://img.shields.io/github/v/release/marrionesa/animabooter?label=release)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
+![Telemetry](https://img.shields.io/badge/telemetry-none-brightgreen)
+![Rust](https://img.shields.io/badge/Rust-Tauri%202-dea584?logo=rust)
+![Svelte](https://img.shields.io/badge/Svelte%205-TypeScript-ff3e00?logo=svelte)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4)](CONTRIBUTING.md)
+[![Website](https://img.shields.io/badge/website-animabooter.github.io-8b5cf6)](https://marrionesa.github.io/animabooter-website/)
 
 </div>
 
