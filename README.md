@@ -1,5 +1,7 @@
 <div align="center">
-
+<p align="center">
+  <img src="docs/screenshots/00-box.jpg" width="220" alt="AnimaBooter box art" title="AnimaBooter box art"/>
+</p>
 # AnimaBooter
 
 **Flash USB drives with soul** · *Flashea tu USB con alma*
@@ -24,10 +26,6 @@ verification hashing**.
 ---
 
 ## Screenshots
-
-<p align="center">
-  <img src="docs/screenshots/00-box.jpg" width="220" alt="AnimaBooter box art" title="AnimaBooter box art"/>
-</p>
 
 <p align="center">
   <img src="docs/screenshots/01-image.png" width="32%" alt="Step 1 — drop a disk image on the mascot" title="1 · Image — drop an .iso / .img / compressed image"/>
