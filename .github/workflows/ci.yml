@@ -11,6 +11,8 @@ on:
         description: "Tag de release a publicar"
         required: true
         default: "v0.1.0"
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write

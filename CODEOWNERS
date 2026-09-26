@@ -1,0 +1,3 @@
+# Default owner for everything in the repository.
+# Every PR touching any file requires review from @marrionesa.
+* @marrionesa
