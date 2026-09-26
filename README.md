@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/screenshots/00-box.jpg" width="180" alt="AnimaBooter" title="AnimaBooter"/>
+<img src="docs/screenshots/banner-hero.jpg" width="100%" alt="AnimaBooter — Flash USB drives with soul" title="AnimaBooter"/>
 
 # AnimaBooter
 
@@ -52,6 +52,10 @@ Grab a bundle from the [**v0.1.0 release**](https://github.com/marrionesa/animab
 > hardware-tested.
 
 ## Why AnimaBooter?
+
+<p align="center">
+  <img src="docs/screenshots/banner-showcase.jpg" width="85%" alt="AnimaBooter — free, open-source, cross-platform" title="Free · Open-Source · Cross-Platform"/>
+</p>
 
 Etcher is sequential: it reads, writes and verifies in a queue, and
 verification re-reads, re-decompresses and re-hashes everything.
