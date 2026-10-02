@@ -2,8 +2,8 @@
 
 use tauri::State;
 
-use crate::error::AppError;
 use crate::state::AppState;
+use animabooter_core::error::AppError;
 
 #[tauri::command]
 pub async fn cancel_flash(state: State<'_, AppState>) -> Result<(), AppError> {

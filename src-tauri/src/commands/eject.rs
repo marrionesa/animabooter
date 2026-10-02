@@ -5,9 +5,9 @@ use std::sync::Arc;
 
 use tauri::State;
 
-use crate::core::EventSink;
-use crate::error::AppError;
 use crate::state::{AppState, TauriEventSink};
+use animabooter_core::core::EventSink;
+use animabooter_core::error::AppError;
 
 #[tauri::command]
 pub async fn eject(
@@ -25,5 +25,5 @@ pub async fn eject(
 }
 
 fn platform_eject(drive_path: &str) -> Result<(), AppError> {
-    crate::platform::eject(Path::new(drive_path))
+    animabooter_core::platform::eject(Path::new(drive_path))
 }

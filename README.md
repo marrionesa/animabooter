@@ -155,7 +155,16 @@ cargo test             # pipeline suites: progress math, throttle 200 ms,
                        # cancellation, 1-byte corruption, gzip roundtrip
 cd ..
 pnpm tauri build       # bundles for your platform
+
+# CLI (from the repository root)
+cargo test --workspace
+cargo run -p animabooter-cli -- --help
+cargo run -p animabooter-cli -- list --json
 ```
+
+The CLI is documented in [docs/cli.md](docs/cli.md). It shares the Rust
+engine with the desktop application and requires `--yes` for destructive
+flashes.
 
 The Windows build additionally needs the icon set (already generated in
 `src-tauri/icons/`, including `icon.ico` / `icon.icns`). To regenerate from
@@ -180,12 +189,11 @@ Then: `sudo udevadm control --reload && sudo udevadm trigger`.
 index.html, src/          Svelte 5 frontend (TypeScript + Tailwind v4)
   src/components/         Wizard, DriveList, Dropzone, ConfirmModal, ...
   src/lib/                IPC bridge (ipc.ts, types.ts), stores, i18n (EN/ES)
+crates/animabooter-core/  shared Tauri-free engine and platform backends
+crates/animabooter-cli/   terminal commands: list, flash, eject
 src-tauri/                Rust backend (Tauri 2)
-  src/commands/           IPC commands: list_drives, flash, cancel_flash, eject
-  src/core/               3-stage pipeline: reader/writer/verifier, progress
-  src/image/              image detection + streaming decompression
-  src/platform/           per-OS device handling (linux / macos / windows)
-  src/safety.rs           hard refusals and device safety rules
+  src/commands/            IPC adapters for the shared core
+  src/state.rs             settings, cancellation and Tauri event bridge
   src-tauri/tauri.conf.json, capabilities/
 .github/workflows/        ci.yml (manual) and release.yml (manual or v* tags)
 ```

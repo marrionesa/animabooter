@@ -1,0 +1,40 @@
+[package]
+name = "animabooter-core"
+version = "0.2.0"
+description = "Shared USB imaging engine for AnimaBooter"
+authors = ["marrionesa"]
+license = "MIT"
+repository = "https://github.com/marrionesa/animabooter"
+homepage = "https://github.com/marrionesa/animabooter"
+edition = "2021"
+rust-version = "1.77.2"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+flate2 = "1"
+xz2 = "0.1"
+zstd = "0.13"
+bzip2 = "0.4"
+blake3 = "1"
+sha2 = "0.10"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+udev = "0.9"
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+plist = "1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.58", features = [
+  "Win32_Storage_FileSystem",
+  "Win32_Storage",
+  "Win32_System_IO",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_Devices_DeviceAndDriverInstallation",
+  "Win32_Security",
+  "Win32_System_Threading",
+  "Win32_System_Ioctl",
+] }

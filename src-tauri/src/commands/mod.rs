@@ -11,9 +11,9 @@ use std::path::Path;
 use serde::Serialize;
 use tauri::State;
 
-use crate::error::AppError;
-use crate::image::detect::{detect_file, estimate_uncompressed_size};
 use crate::state::{AppState, Settings};
+use animabooter_core::error::AppError;
+use animabooter_core::image::detect::{detect_file, estimate_uncompressed_size};
 
 // Small utility commands live here to keep the file tree exactly as
 // specified by the project layout.
@@ -70,7 +70,7 @@ pub async fn set_settings(state: State<'_, AppState>, settings: Settings) -> Res
 #[tauri::command]
 pub async fn restart_as_admin() -> Result<(), AppError> {
     #[cfg(target_os = "windows")]
-    let result = crate::platform::windows::restart_as_admin();
+    let result = animabooter_core::platform::windows::restart_as_admin();
     #[cfg(not(target_os = "windows"))]
     let result: Result<(), AppError> = Err(AppError::platform(
         "elevated restart is only needed on Windows",

@@ -1,0 +1,27 @@
+{
+  "name": "@marrionesa/animabooter",
+  "version": "0.2.0",
+  "description": "Cross-platform AnimaBooter USB imaging CLI",
+  "license": "MIT",
+  "author": "marrionesa",
+  "type": "module",
+  "bin": {
+    "animabooter": "bin/animabooter.mjs"
+  },
+  "files": [
+    "bin/animabooter.mjs",
+    "scripts/install.mjs"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/install.mjs"
+  },
+  "dependencies": {
+    "tar": "^7.4.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
