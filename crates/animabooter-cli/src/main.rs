@@ -60,6 +60,7 @@ struct FlashArgs {
 #[derive(Debug, Args)]
 struct DeviceArgs {
     /// Device path, for example /dev/sdb.
+    #[arg(long)]
     device: String,
 }
 
