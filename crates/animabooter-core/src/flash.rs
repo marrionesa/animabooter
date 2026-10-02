@@ -37,6 +37,15 @@ pub fn run_flash(
     let image_size = std::fs::metadata(image)
         .map_err(|error| AppError::image(format!("cannot inspect image {image:?}: {error}")))?
         .len();
+    if platform::source_matches_drive(image, &drive)? {
+        return Err(AppError::Safety {
+            message: format!(
+                "refusing to use the target device {} as the image source",
+                drive.path
+            ),
+            hint: Some("Choose an image stored on a different device.".to_string()),
+        });
+    }
     let estimated_payload = estimate_uncompressed_size(image, detection.kind, Some(image_size));
     ensure_capacity(estimated_payload, drive.size_bytes, image, &drive.path)?;
 

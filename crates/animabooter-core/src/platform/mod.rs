@@ -20,8 +20,10 @@ pub mod macos;
 pub mod windows;
 
 #[cfg(target_os = "linux")]
-pub use linux::{check_flash_allowed, eject, list_drives, open_target_pair};
+pub use linux::{check_flash_allowed, eject, list_drives, open_target_pair, source_matches_drive};
 #[cfg(target_os = "macos")]
-pub use macos::{check_flash_allowed, eject, list_drives, open_target_pair};
+pub use macos::{check_flash_allowed, eject, list_drives, open_target_pair, source_matches_drive};
 #[cfg(target_os = "windows")]
-pub use windows::{check_flash_allowed, eject, list_drives, open_target_pair};
+pub use windows::{
+    check_flash_allowed, eject, list_drives, open_target_pair, source_matches_drive,
+};
