@@ -1,11 +1,6 @@
 //! AnimaBooter library entry — wires plugins, state and IPC commands.
 
 mod commands;
-mod core;
-mod error;
-mod image;
-mod platform;
-mod safety;
 mod state;
 
 use tauri::Manager;

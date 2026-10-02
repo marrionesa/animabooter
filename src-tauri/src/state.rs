@@ -7,9 +7,11 @@ use std::sync::atomic::AtomicBool;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::core::cancel_token::CancelToken;
-use crate::core::{DonePayload, ErrorPayload, EventSink, Phase, ProgressPayload, VerifyPayload};
-use crate::error::AppError;
+use animabooter_core::core::cancel_token::CancelToken;
+use animabooter_core::AppError;
+use animabooter_core::{
+    DonePayload, ErrorPayload, EventSink, Phase, ProgressPayload, VerifyPayload,
+};
 
 /// Persisted user settings (settings.json inside the OS config dir).
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,7 +118,7 @@ impl EventSink for TauriEventSink {
         let _ = self.0.emit(
             "flash://log",
             LogLine {
-                line: format!("{} {}", crate::core::timestamp(), line),
+                line: format!("{} {}", animabooter_core::core::timestamp(), line),
             },
         );
     }

@@ -10,12 +10,12 @@ on:
       tag:
         description: "Tag de release a publicar"
         required: true
-        default: "v0.1.0"
+        default: "v0.2.0"
   pull_request:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   linux:
@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.tag || github.sha }}
 
       - name: Install system dependencies
         run: |
@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: animabooter-linux
-          path: src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/**/*
+          path: target/x86_64-unknown-linux-gnu/release/bundle/**/*
           retention-days: 14
 
   windows:
@@ -68,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.tag || github.sha }}
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -88,7 +88,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: animabooter-windows
-          path: src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*
+          path: target/x86_64-pc-windows-msvc/release/bundle/**/*
           retention-days: 14
 
   macos:
@@ -97,7 +97,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.tag || github.sha }}
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -119,12 +119,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: animabooter-macos
-          path: src-tauri/target/aarch64-apple-darwin/release/bundle/**/*
+          path: target/aarch64-apple-darwin/release/bundle/**/*
           retention-days: 14
 
   publish:
     name: Publish GitHub Release
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs:
       - linux
       - windows

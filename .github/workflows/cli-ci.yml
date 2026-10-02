@@ -1,0 +1,30 @@
+name: cli-ci
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install CLI system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check CLI and core
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy -p animabooter-core -p animabooter-cli --all-targets -- -D warnings
+          cargo test -p animabooter-core
+          cargo build -p animabooter-cli --release
+          cargo run -p animabooter-cli -- --help
