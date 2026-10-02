@@ -167,6 +167,19 @@ pub fn is_partition_of(disk: &str, source: &str) -> bool {
 
 pub use crate::platform::unix_common::open_unix_pair as open_target_pair;
 
+/// Detects whether the source resolves to the selected disk or one of its
+/// partitions before any target handle is opened.
+pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, AppError> {
+    let source = std::fs::canonicalize(image)
+        .map_err(|e| AppError::image(format!("cannot resolve image {image:?}: {e}")))?;
+    let target_path = Path::new(&drive.path);
+    let target = std::fs::canonicalize(target_path)
+        .map_err(|e| AppError::platform(format!("cannot resolve target {target_path:?}: {e}")))?;
+    let source = source.to_string_lossy();
+    let target = target.to_string_lossy();
+    Ok(source == target || is_partition_of(&target, &source) || is_partition_of(&source, &target))
+}
+
 /// HARD safety re-check right before opening the device:
 /// * root filesystem on the target => unconditional rejection;
 /// * other mounted partitions => attempt `udisksctl unmount`, else reject

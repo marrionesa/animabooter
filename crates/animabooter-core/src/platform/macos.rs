@@ -142,6 +142,35 @@ fn raw_device_path(path: &Path) -> PathBuf {
     }
 }
 
+/// Extract the physical disk identifier from `/dev/diskN`, `/dev/rdiskN` or
+/// one of their partition paths such as `/dev/diskNs1`.
+fn disk_identifier(path: &Path) -> Option<u64> {
+    let text = path.to_str()?.strip_prefix("/dev/")?;
+    let text = text.strip_prefix('r').unwrap_or(text);
+    let rest = text.strip_prefix("disk")?;
+    let digits: String = rest
+        .chars()
+        .take_while(|character| character.is_ascii_digit())
+        .collect();
+    if digits.is_empty() {
+        return None;
+    }
+    let suffix = &rest[digits.len()..];
+    if suffix.is_empty() || suffix.starts_with('s') {
+        digits.parse().ok()
+    } else {
+        None
+    }
+}
+
+/// Rejects `/dev/diskN`, `/dev/rdiskN` and partitions belonging to the target
+/// disk before the raw target handle is opened.
+pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, AppError> {
+    let source = disk_identifier(image);
+    let target = disk_identifier(Path::new(&drive.path));
+    Ok(source.is_some() && source == target)
+}
+
 use crate::platform::unix_common::open_unix_pair;
 
 /// Open the RAW device pair (rdiskN). See `raw_device_path` for why.
@@ -235,10 +264,9 @@ pub fn eject(path: &Path) -> Result<(), AppError> {
 }
 
 fn disk_id_from_path(path: &Path) -> Result<String, AppError> {
-    let text = path.to_string_lossy();
-    text.strip_prefix("/dev/disk")
-        .map(str::to_string)
-        .ok_or_else(|| AppError::device(format!("not a macOS disk path: {text}")))
+    disk_identifier(path)
+        .map(|id| id.to_string())
+        .ok_or_else(|| AppError::device(format!("not a macOS disk path: {path:?}")))
 }
 
 #[cfg(test)]

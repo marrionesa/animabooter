@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "crates/animabooter-core",
+    "crates/animabooter-cli",
+    "src-tauri",
+]
+resolver = "2"
+
+[profile.release]
+opt-level = "z"
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"

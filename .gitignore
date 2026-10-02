@@ -1,10 +1,12 @@
 # Node / Vite
 node_modules/
+packages/**/.bin/
 dist/
 *.local
 .vite/
 
 # Rust / Tauri build artifacts
+target/
 src-tauri/target/
 src-tauri/gen/
 
