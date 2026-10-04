@@ -163,10 +163,35 @@ fn disk_identifier(path: &Path) -> Option<u64> {
     }
 }
 
+fn source_disk_identifier(path: &Path) -> Result<Option<u64>, AppError> {
+    if let Some(identifier) = disk_identifier(path) {
+        return Ok(Some(identifier));
+    }
+
+    let volume_path = path.parent().unwrap_or(path).to_string_lossy().to_string();
+    let output = Command::new("diskutil")
+        .args(["info", "-plist", &volume_path])
+        .output()
+        .map_err(|e| AppError::platform(format!("cannot run diskutil: {e}")))?;
+    if !output.status.success() {
+        return Ok(None);
+    }
+    let value = parse_plist(&output.stdout)?;
+    let Some(dict) = value.as_dictionary() else {
+        return Ok(None);
+    };
+    ["PartOfWhole", "ParentWholeDisk", "DeviceIdentifier"]
+        .iter()
+        .filter_map(|key| dict.get(*key).and_then(Value::as_string))
+        .find_map(|identifier| disk_identifier(Path::new(&format!("/dev/{identifier}"))))
+        .map(Some)
+        .ok_or_else(|| AppError::platform("diskutil did not identify the source volume"))
+}
+
 /// Rejects `/dev/diskN`, `/dev/rdiskN` and partitions belonging to the target
 /// disk before the raw target handle is opened.
 pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, AppError> {
-    let source = disk_identifier(image);
+    let source = source_disk_identifier(image)?;
     let target = disk_identifier(Path::new(&drive.path));
     Ok(source.is_some() && source == target)
 }

@@ -256,6 +256,11 @@ pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, App
         let letter = letter.to_ascii_uppercase();
         return Ok(volume_device_number(letter).is_some_and(|(number, _)| number == target));
     }
+    let mut chars = source.chars();
+    if let (Some(letter), Some(':')) = (chars.next(), chars.next()) {
+        let letter = letter.to_ascii_uppercase();
+        return Ok(volume_device_number(letter).is_some_and(|(number, _)| number == target));
+    }
     Ok(false)
 }
 

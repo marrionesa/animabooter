@@ -145,11 +145,18 @@ pub fn parse_mounts() -> Result<Vec<(String, String)>, AppError> {
         .lines()
         .filter_map(|line| {
             let mut fields = line.split_whitespace();
-            let source = fields.next()?.to_string();
-            let mount_point = fields.next()?.to_string();
+            let source = decode_mount_field(fields.next()?);
+            let mount_point = decode_mount_field(fields.next()?);
             Some((source, mount_point))
         })
         .collect())
+}
+
+fn decode_mount_field(field: &str) -> String {
+    field
+        .replace("\\040", " ")
+        .replace("\\011", "\t")
+        .replace("\\134", "\\")
 }
 
 /// True when `source` is a partition OF `disk` (not the disk itself).
@@ -175,9 +182,31 @@ pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, App
     let target_path = Path::new(&drive.path);
     let target = std::fs::canonicalize(target_path)
         .map_err(|e| AppError::platform(format!("cannot resolve target {target_path:?}: {e}")))?;
-    let source = source.to_string_lossy();
-    let target = target.to_string_lossy();
-    Ok(source == target || is_partition_of(&target, &source) || is_partition_of(&source, &target))
+    let source_text = source.to_string_lossy();
+    let target_text = target.to_string_lossy();
+    if source_text == target_text
+        || is_partition_of(&target_text, &source_text)
+        || is_partition_of(&source_text, &target_text)
+    {
+        return Ok(true);
+    }
+
+    for (mount_source, mount_point) in parse_mounts()? {
+        let mount_point = Path::new(&mount_point);
+        let Ok(mount_point) = std::fs::canonicalize(mount_point) else {
+            continue;
+        };
+        if !source.starts_with(&mount_point) {
+            continue;
+        }
+        if mount_source == drive.path
+            || is_partition_of(&drive.path, &mount_source)
+            || is_partition_of(&mount_source, &drive.path)
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 /// HARD safety re-check right before opening the device:

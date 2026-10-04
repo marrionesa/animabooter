@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { chmod, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { chmod, copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,7 +35,7 @@ try {
   const extractedBinary = join(extractedDir, `animabooter${extension}`);
   await mkdir(binaryDir, { recursive: true });
   await rm(binary, { force: true });
-  await rename(extractedBinary, binary);
+  await copyFile(extractedBinary, binary);
   if (process.platform !== "win32") {
     await chmod(binary, 0o755);
   }
