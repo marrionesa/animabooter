@@ -177,6 +177,16 @@ pub use crate::platform::unix_common::open_unix_pair as open_target_pair;
 /// Detects whether the source resolves to the selected disk or one of its
 /// partitions before any target handle is opened.
 pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, AppError> {
+    use std::os::unix::fs::MetadataExt;
+
+    let image_metadata = std::fs::metadata(image)
+        .map_err(|e| AppError::image(format!("cannot stat image {image:?}: {e}")))?;
+    let target_metadata = std::fs::metadata(&drive.path)
+        .map_err(|e| AppError::platform(format!("cannot stat target {}: {e}", drive.path)))?;
+    if image_metadata.dev() == target_metadata.rdev() {
+        return Ok(true);
+    }
+
     let source = std::fs::canonicalize(image)
         .map_err(|e| AppError::image(format!("cannot resolve image {image:?}: {e}")))?;
     let target_path = Path::new(&drive.path);
