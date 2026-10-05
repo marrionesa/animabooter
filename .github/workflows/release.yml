@@ -1,13 +1,17 @@
-# Prepared but INERT: release artifacts are only built if the repository is
-# published and a v* tag is pushed manually by the owner. There is no
-# publishing step here — artifacts stay as workflow uploads.
-
 name: release
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build and publish"
+        required: true
+        default: "v0.2.0"
   push:
     tags: ["v*"]
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -17,13 +21,21 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            cli_asset: linux-x64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            cli_asset: windows-x64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            cli_asset: darwin-x64
           - os: macos-latest
             target: aarch64-apple-darwin
+            cli_asset: darwin-arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - name: Linux system dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -34,14 +46,62 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Enable pnpm
         run: corepack enable
-      - name: Build bundles
+      - name: Build desktop bundle
         run: |
           pnpm install --frozen-lockfile
           pnpm tauri build --target ${{ matrix.target }}
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Build CLI
+        run: cargo build -p animabooter-cli --release --target ${{ matrix.target }}
+      - name: Package CLI asset
+        shell: bash
+        run: |
+          mkdir -p cli-package
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cp "target/${{ matrix.target }}/release/animabooter.exe" cli-package/animabooter.exe
+            tar -czf "animabooter-cli-${{ matrix.cli_asset }}.tar.gz" -C cli-package animabooter.exe
+          else
+            cp "target/${{ matrix.target }}/release/animabooter" cli-package/animabooter
+            tar -czf "animabooter-cli-${{ matrix.cli_asset }}.tar.gz" -C cli-package animabooter
+          fi
+      - uses: actions/upload-artifact@v4
         with:
           name: animabooter-${{ matrix.target }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/**/*
+            target/${{ matrix.target }}/release/bundle/**/*
+            animabooter-cli-${{ matrix.cli_asset }}.tar.gz
           retention-days: 14
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-upload
+      - name: Prepare assets and checksums
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          find release-upload -type f -regex '.*\.\(exe\|msi\|dmg\|deb\|rpm\|AppImage\|AppImage\.tar\.gz\)' | while read -r file; do
+            platform=$(echo "$file" | cut -d/ -f2)
+            cp "$file" "assets/${platform}_$(basename "$file")"
+          done
+          find release-upload -type f -name 'animabooter-cli-*.tar.gz' -exec cp {} assets/ \;
+          cd assets
+          sha256sum animabooter-cli-*.tar.gz > animabooter-cli-checksums.txt
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if gh release view -R "${{ github.repository }}" "$TAG" >/dev/null 2>&1; then
+            gh release upload -R "${{ github.repository }}" "$TAG" assets/* --clobber
+          else
+            gh release create -R "${{ github.repository }}" "$TAG" assets/* \
+              --title "AnimaBooter $TAG" \
+              --generate-notes
+          fi

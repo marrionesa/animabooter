@@ -222,6 +222,48 @@ fn volume_device_number(letter: char) -> Option<(u32, u32)> {
     Some((device_number, partition))
 }
 
+fn physical_drive_number(path: &Path) -> Option<u32> {
+    let text = path.to_str()?;
+    let prefix = r"\\.\PhysicalDrive";
+    if text.len() < prefix.len() || !text[..prefix.len()].eq_ignore_ascii_case(prefix) {
+        return None;
+    }
+    text[prefix.len()..].parse().ok()
+}
+
+/// Resolves PhysicalDrive paths and `\\.\X:` volume paths to the same
+/// physical disk number before the target is opened.
+pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, AppError> {
+    let Some(target) = physical_drive_number(Path::new(&drive.path)) else {
+        return Err(AppError::platform(format!(
+            "cannot resolve Windows target path: {}",
+            drive.path
+        )));
+    };
+
+    if let Some(source) = physical_drive_number(image) {
+        return Ok(source == target);
+    }
+
+    let Some(source) = image.to_str() else {
+        return Ok(false);
+    };
+    if let Some(volume) = source.strip_prefix(r"\\.\") {
+        let mut chars = volume.chars();
+        let (Some(letter), Some(':'), None) = (chars.next(), chars.next(), chars.next()) else {
+            return Ok(false);
+        };
+        let letter = letter.to_ascii_uppercase();
+        return Ok(volume_device_number(letter).is_some_and(|(number, _)| number == target));
+    }
+    let mut chars = source.chars();
+    if let (Some(letter), Some(':')) = (chars.next(), chars.next()) {
+        let letter = letter.to_ascii_uppercase();
+        return Ok(volume_device_number(letter).is_some_and(|(number, _)| number == target));
+    }
+    Ok(false)
+}
+
 /// (vendor, product, serial, bus_type_byte, removable, size_bytes)
 type DriveProperties = (String, String, String, u8, bool, u64);
 

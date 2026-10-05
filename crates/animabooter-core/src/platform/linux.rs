@@ -145,11 +145,18 @@ pub fn parse_mounts() -> Result<Vec<(String, String)>, AppError> {
         .lines()
         .filter_map(|line| {
             let mut fields = line.split_whitespace();
-            let source = fields.next()?.to_string();
-            let mount_point = fields.next()?.to_string();
+            let source = decode_mount_field(fields.next()?);
+            let mount_point = decode_mount_field(fields.next()?);
             Some((source, mount_point))
         })
         .collect())
+}
+
+fn decode_mount_field(field: &str) -> String {
+    field
+        .replace("\\040", " ")
+        .replace("\\011", "\t")
+        .replace("\\134", "\\")
 }
 
 /// True when `source` is a partition OF `disk` (not the disk itself).
@@ -166,6 +173,60 @@ pub fn is_partition_of(disk: &str, source: &str) -> bool {
 }
 
 pub use crate::platform::unix_common::open_unix_pair as open_target_pair;
+
+/// Detects whether the source resolves to the selected disk or one of its
+/// partitions before any target handle is opened.
+pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, AppError> {
+    use std::os::unix::fs::MetadataExt;
+
+    let image = std::fs::canonicalize(image)
+        .map_err(|e| AppError::image(format!("cannot resolve image {image:?}: {e}")))?;
+    let target_path = Path::new(&drive.path);
+    let target = std::fs::canonicalize(target_path)
+        .map_err(|e| AppError::platform(format!("cannot resolve target {target_path:?}: {e}")))?;
+
+    let image_dev = std::fs::metadata(&image)
+        .map(|metadata| metadata.dev())
+        .unwrap_or(0);
+    let target_dev = std::fs::metadata(&target)
+        .map(|metadata| metadata.dev())
+        .unwrap_or(0);
+    if image_dev == target_dev {
+        return Ok(true);
+    }
+
+    let source_text = image.to_string_lossy();
+    let target_text = target.to_string_lossy();
+    if source_text == target_text
+        || is_partition_of(&target_text, &source_text)
+        || is_partition_of(&source_text, &target_text)
+    {
+        return Ok(true);
+    }
+
+    let mount_source = parse_mounts()?
+        .into_iter()
+        .filter_map(|(source, mount_point)| {
+            let mount_point = Path::new(&mount_point);
+            let mount_point = std::fs::canonicalize(mount_point).ok()?;
+            if image.starts_with(&mount_point) {
+                Some(source)
+            } else {
+                None
+            }
+        })
+        .max_by_key(|source| source.len());
+
+    if let Some(mount_source) = mount_source {
+        if mount_source == drive.path
+            || is_partition_of(&drive.path, &mount_source)
+            || is_partition_of(&mount_source, &drive.path)
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
 
 /// HARD safety re-check right before opening the device:
 /// * root filesystem on the target => unconditional rejection;
