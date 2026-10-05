@@ -179,20 +179,23 @@ pub use crate::platform::unix_common::open_unix_pair as open_target_pair;
 pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, AppError> {
     use std::os::unix::fs::MetadataExt;
 
-    let image_metadata = std::fs::metadata(image)
-        .map_err(|e| AppError::image(format!("cannot stat image {image:?}: {e}")))?;
-    let target_metadata = std::fs::metadata(&drive.path)
-        .map_err(|e| AppError::platform(format!("cannot stat target {}: {e}", drive.path)))?;
-    if image_metadata.dev() == target_metadata.rdev() {
-        return Ok(true);
-    }
-
-    let source = std::fs::canonicalize(image)
+    let image = std::fs::canonicalize(image)
         .map_err(|e| AppError::image(format!("cannot resolve image {image:?}: {e}")))?;
     let target_path = Path::new(&drive.path);
     let target = std::fs::canonicalize(target_path)
         .map_err(|e| AppError::platform(format!("cannot resolve target {target_path:?}: {e}")))?;
-    let source_text = source.to_string_lossy();
+
+    let image_dev = std::fs::metadata(&image)
+        .map(|metadata| metadata.dev())
+        .unwrap_or(0);
+    let target_dev = std::fs::metadata(&target)
+        .map(|metadata| metadata.dev())
+        .unwrap_or(0);
+    if image_dev == target_dev {
+        return Ok(true);
+    }
+
+    let source_text = image.to_string_lossy();
     let target_text = target.to_string_lossy();
     if source_text == target_text
         || is_partition_of(&target_text, &source_text)
@@ -201,14 +204,20 @@ pub fn source_matches_drive(image: &Path, drive: &DriveInfo) -> Result<bool, App
         return Ok(true);
     }
 
-    for (mount_source, mount_point) in parse_mounts()? {
-        let mount_point = Path::new(&mount_point);
-        let Ok(mount_point) = std::fs::canonicalize(mount_point) else {
-            continue;
-        };
-        if !source.starts_with(&mount_point) {
-            continue;
-        }
+    let mount_source = parse_mounts()?
+        .into_iter()
+        .filter_map(|(source, mount_point)| {
+            let mount_point = Path::new(&mount_point);
+            let mount_point = std::fs::canonicalize(mount_point).ok()?;
+            if image.starts_with(&mount_point) {
+                Some(source)
+            } else {
+                None
+            }
+        })
+        .max_by_key(|source| source.len());
+
+    if let Some(mount_source) = mount_source {
         if mount_source == drive.path
             || is_partition_of(&drive.path, &mount_source)
             || is_partition_of(&mount_source, &drive.path)
