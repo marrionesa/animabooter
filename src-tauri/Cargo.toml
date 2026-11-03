@@ -29,6 +29,7 @@ zstd = "0.13"
 bzip2 = "0.4"
 blake3 = "1"
 sha2 = "0.10"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 udev = "0.9"
