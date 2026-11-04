@@ -75,3 +75,34 @@ export interface SelectedImage {
 }
 
 export const THEMES: Theme[] = ["midnight", "catppuccin-mocha", "tokyo-night"];
+
+// ---------------------------------------------------------------------------
+// OS download feature (download:// IPC contract)
+// ---------------------------------------------------------------------------
+
+export type DownloadStatus = "resolving" | "downloading" | "verifying" | "done";
+
+export interface DownloadProgressData {
+  downloaded: number;
+  total: number | null;
+  speed_mbs: number;
+  eta_secs: number | null;
+  percent: number | null;
+}
+
+export interface DownloadOutcomeData {
+  path: string;
+  name: string;
+  size: number;
+  sha256: string;
+  verified: boolean;
+  cached: boolean;
+}
+
+export interface OsCatalogEntry {
+  id: string;
+  name: string;
+  icon: string;
+  size_bytes: number;
+  website: string;
+}

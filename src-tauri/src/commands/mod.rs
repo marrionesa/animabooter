@@ -2,6 +2,7 @@
 //! and `platform`; commands own the busy-flag, cancellation and safety flow.
 
 pub mod cancel_flash;
+pub mod download;
 pub mod eject;
 pub mod flash;
 pub mod list_drives;

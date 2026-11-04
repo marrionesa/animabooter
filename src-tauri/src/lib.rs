@@ -2,6 +2,7 @@
 
 mod commands;
 mod core;
+mod download;
 mod error;
 mod image;
 mod platform;
@@ -24,6 +25,9 @@ pub fn run() {
             commands::flash::flash,
             commands::cancel_flash::cancel_flash,
             commands::eject::eject,
+            commands::download::list_os_catalog,
+            commands::download::download_iso,
+            commands::download::cancel_download,
             commands::detect_image,
             commands::get_settings,
             commands::set_settings,

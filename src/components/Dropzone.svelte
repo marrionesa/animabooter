@@ -8,6 +8,7 @@
   import { fade, fly } from "svelte/transition";
   import { FileImage, FolderOpen, Loader2, TriangleAlert } from "lucide-svelte";
   import Mascot from "./Mascot.svelte";
+  import OsPicker from "./OsPicker.svelte";
   import { detectImage, toErrorData } from "../lib/ipc";
   import {
     selectedImage,
@@ -131,6 +132,10 @@
       </span>
     {/if}
   </button>
+
+  <div class="mt-4 flex justify-center">
+    <OsPicker />
+  </div>
 
   {#if error}
     <div

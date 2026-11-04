@@ -23,9 +23,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type {
   DetectionInfo,
+  DownloadOutcomeData,
+  DownloadProgressData,
+  DownloadStatus,
   DoneData,
   DriveInfo,
   ErrorData,
+  OsCatalogEntry,
   Phase,
   ProgressData,
   Settings,
@@ -112,4 +116,41 @@ export function toErrorData(err: unknown): ErrorData {
     };
   }
   return { message: String(err), hint: null };
+}
+
+// ---------------------------------------------------------------------------
+// OS download — commands + events (download://…)
+// ---------------------------------------------------------------------------
+
+export async function listOsCatalog(): Promise<OsCatalogEntry[]> {
+  return invoke<OsCatalogEntry[]>("list_os_catalog");
+}
+
+/** Resolves when the ISO is cached, hash-verified and ready to flash. */
+export async function downloadIso(osId: string): Promise<DownloadOutcomeData> {
+  return invoke<DownloadOutcomeData>("download_iso", { osId });
+}
+
+export async function cancelDownload(): Promise<void> {
+  return invoke("cancel_download");
+}
+
+export function onDownloadStatus(
+  cb: (state: DownloadStatus) => void,
+): Promise<UnlistenFn> {
+  return listen<{ state: DownloadStatus }>("download://status", (e) =>
+    cb(e.payload.state),
+  );
+}
+
+export function onDownloadProgress(
+  cb: (p: DownloadProgressData) => void,
+): Promise<UnlistenFn> {
+  return listen<DownloadProgressData>("download://progress", (e) =>
+    cb(e.payload),
+  );
+}
+
+export function onDownloadLog(cb: (line: string) => void): Promise<UnlistenFn> {
+  return listen<{ line: string }>("download://log", (e) => cb(e.payload.line));
 }
