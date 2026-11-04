@@ -5,7 +5,6 @@
   "app.toolbar": "Application options",
   "app.createdBy": "Created by",
   "app.openSource": "Open source · MIT",
-
   "common.back": "Back",
   "common.cancel": "Cancel",
   "common.close": "Close",
@@ -20,12 +19,10 @@
   "common.flashAnother": "Flash another",
   "common.restartAdmin": "Restart as admin",
   "common.dismiss": "Dismiss",
-
   "steps.image": "Image",
   "steps.drive": "Drive",
   "steps.confirm": "Confirm",
   "steps.write": "Write",
-
   "drop.title": "Drop a disk image here",
   "drop.subtitle": "or click to browse — .iso, .img, .gz, .xz, .zst, .bz2",
   "drop.browse": "Browse files",
@@ -41,7 +38,16 @@
   "drop.windowsIso.title": "Windows ISO detected",
   "drop.windowsIso.body": "Windows ISOs may not boot via dd if install.wim is larger than 4 GiB. Continue at your own risk.",
   "drop.unsupportedHint": "zip archives are not supported — use the raw .img or a gz/xz/zst/bz2 stream.",
-
+  "osd.pick.button": "Download an ISO",
+  "osd.pick.title": "Download an operating system",
+  "osd.pick.subtitle": "Pick the OS whose official ISO you want to download and flash.",
+  "osd.pick.empty": "The OS catalog could not be loaded. Restart the app and try again.",
+  "osd.pick.website": "Open the official {name} website",
+  "osd.pick.trustNote": "ISOs are downloaded from each project's official servers and verified against their published SHA-256. AnimaBooter never serves modified images.",
+  "osd.status.resolving": "Consulting the official index…",
+  "osd.status.downloading": "Downloading official ISO…",
+  "osd.status.verifying": "Verifying SHA-256…",
+  "osd.status.done": "Download verified!",
   "drives.title": "Select a target drive",
   "drives.refresh": "Refresh list",
   "drives.empty": "No removable drives found",
@@ -52,7 +58,6 @@
   "drives.selected": "Selected",
   "drives.select": "Select",
   "drives.failed": "Could not list drives: {message}",
-
   "confirm.title": "This will erase the drive",
   "confirm.subtitle": "Everything on the target below will be permanently destroyed.",
   "confirm.image": "Image",
@@ -65,7 +70,6 @@
   "confirm.holdHint": "Hold the button for 1.2s — it refuses to fire on a misclick.",
   "confirm.holdKeyHint": "Keyboard: hold Enter or Space.",
   "confirm.systemWarn": "This drive is flagged as SYSTEM. The backend will hard-refuse if it hosts the operating system.",
-
   "progress.writing": "Writing image…",
   "progress.verifying": "Verifying written bytes…",
   "progress.finalizing": "Flushing & finalizing…",
@@ -83,12 +87,10 @@
   "progress.cancel.confirm": "Yes, cancel",
   "progress.log": "Live log",
   "progress.logHide": "Hide log",
-
   "error.title": "Flash failed",
   "error.cancelled.title": "Flash cancelled",
   "error.hint": "Hint",
   "error.backToDrives": "Back to drives",
-
   "result.title": "Your drive is ready",
   "result.verified": "verified: OK ✓",
   "result.unverified": "verification skipped",
@@ -102,7 +104,6 @@
   "result.when": "flashed at",
   "result.exportPng": "Export PNG",
   "result.notify": "USB drive flashed successfully",
-
   "settings.unsafe.title": "Enable unsafe mode?",
   "settings.unsafe.titleShort": "Unsafe mode",
   "settings.unsafe.body1": "Internal disks will appear in the drive list. Writing to the wrong one can destroy your operating system.",
@@ -118,7 +119,6 @@
   "settings.changeTheme": "Change theme",
   "settings.changeLanguage": "Change language",
   "settings.unsafe.disable": "Disable unsafe mode",
-
   "help.title": "Help",
   "help.how.title": "How it works",
   "help.how.image": "Choose a compatible disk image (.iso, .img, or a compressed image).",
@@ -129,7 +129,6 @@
   "help.about.title": "About",
   "help.about.body": "is a free, open-source, cross-platform tool made with soul by ",
   "help.about.license": "MIT License · 2026.",
-
   "misc.bus.usb": "USB",
   "misc.bus.sd": "SD",
   "misc.bus.sata": "SATA",

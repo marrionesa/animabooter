@@ -5,7 +5,6 @@
   "app.toolbar": "Opciones de la aplicación",
   "app.createdBy": "Creado por",
   "app.openSource": "Código abierto · MIT",
-
   "common.back": "Atrás",
   "common.cancel": "Cancelar",
   "common.close": "Cerrar",
@@ -20,12 +19,10 @@
   "common.flashAnother": "Flashear otra",
   "common.restartAdmin": "Reiniciar como admin",
   "common.dismiss": "Cerrar aviso",
-
   "steps.image": "Imagen",
   "steps.drive": "Unidad",
   "steps.confirm": "Confirmar",
   "steps.write": "Escribir",
-
   "drop.title": "Suelta una imagen de disco aquí",
   "drop.subtitle": "o haz clic para explorar — .iso, .img, .gz, .xz, .zst, .bz2",
   "drop.browse": "Explorar archivos",
@@ -41,7 +38,16 @@
   "drop.windowsIso.title": "ISO de Windows detectada",
   "drop.windowsIso.body": "Las ISO de Windows pueden no arrancar vía dd si install.wim supera los 4 GiB. Continúa bajo tu propio riesgo.",
   "drop.unsupportedHint": "los .zip no están soportados — usa el .img original o un flujo gz/xz/zst/bz2.",
-
+  "osd.pick.button": "Descargar una ISO",
+  "osd.pick.title": "Descargar sistema operativo",
+  "osd.pick.subtitle": "Elige el SO cuya ISO oficial quieres descargar y flashear.",
+  "osd.pick.empty": "No se pudo cargar el catálogo de sistemas. Reinicia la app e inténtalo de nuevo.",
+  "osd.pick.website": "Abrir la web oficial de {name}",
+  "osd.pick.trustNote": "Las ISO se descargan desde los servidores oficiales de cada proyecto y se verifican con el SHA-256 que ellos publican. AnimaBooter nunca sirve imágenes modificadas.",
+  "osd.status.resolving": "Consultando el índice oficial…",
+  "osd.status.downloading": "Descargando ISO oficial…",
+  "osd.status.verifying": "Verificando SHA-256…",
+  "osd.status.done": "¡Descarga verificada!",
   "drives.title": "Elige la unidad de destino",
   "drives.refresh": "Actualizar lista",
   "drives.empty": "No hay unidades extraíbles",
@@ -52,7 +58,6 @@
   "drives.selected": "Seleccionada",
   "drives.select": "Elegir",
   "drives.failed": "No se pudo listar: {message}",
-
   "confirm.title": "Esto borrará la unidad",
   "confirm.subtitle": "Todo el contenido del destino será destruido permanentemente.",
   "confirm.image": "Imagen",
@@ -65,7 +70,6 @@
   "confirm.holdHint": "Mantén el botón 1,2 s — se resiste a los clics accidentales.",
   "confirm.holdKeyHint": "Teclado: mantén Enter o Espacio.",
   "confirm.systemWarn": "Esta unidad está marcada como SISTEMA. El backend se negará en firme si aloja el sistema operativo.",
-
   "progress.writing": "Escribiendo imagen…",
   "progress.verifying": "Verificando bytes escritos…",
   "progress.finalizing": "Sincronizando y finalizando…",
@@ -83,12 +87,10 @@
   "progress.cancel.confirm": "Sí, cancelar",
   "progress.log": "Registro en vivo",
   "progress.logHide": "Ocultar registro",
-
   "error.title": "El flasheo falló",
   "error.cancelled.title": "Flasheo cancelado",
   "error.hint": "Pista",
   "error.backToDrives": "Volver a las unidades",
-
   "result.title": "Tu unidad está lista",
   "result.verified": "verificado: OK ✓",
   "result.unverified": "verificación omitida",
@@ -102,7 +104,6 @@
   "result.when": "flasheada",
   "result.exportPng": "Exportar PNG",
   "result.notify": "Unidad USB flasheada correctamente",
-
   "settings.unsafe.title": "¿Activar modo inseguro?",
   "settings.unsafe.titleShort": "Modo inseguro",
   "settings.unsafe.body1": "Los discos internos aparecerán en la lista. Escribir en el equivocado puede destruir tu sistema operativo.",
@@ -118,7 +119,6 @@
   "settings.changeTheme": "Cambiar tema",
   "settings.changeLanguage": "Cambiar idioma",
   "settings.unsafe.disable": "Desactivar modo inseguro",
-
   "help.title": "Ayuda",
   "help.how.title": "Cómo funciona",
   "help.how.image": "Elige una imagen de disco compatible (.iso, .img o comprimida).",
@@ -129,7 +129,6 @@
   "help.about.title": "Acerca de",
   "help.about.body": "es una herramienta libre, de código abierto y multiplataforma creada por ",
   "help.about.license": "Licencia MIT · 2026.",
-
   "misc.bus.usb": "USB",
   "misc.bus.sd": "SD",
   "misc.bus.sata": "SATA",

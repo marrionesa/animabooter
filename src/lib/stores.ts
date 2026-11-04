@@ -5,11 +5,16 @@ import { derived, get, writable } from "svelte/store";
 import en from "./i18n/en.json";
 import es from "./i18n/es.json";
 import { startFlash, toErrorData } from "./ipc";
+import { downloadIso, listOsCatalog } from "./ipc";
 import type {
   DoneData,
+  DownloadOutcomeData,
+  DownloadProgressData,
+  DownloadStatus,
   DriveInfo,
   ErrorData,
   Lang,
+  OsCatalogEntry,
   Phase,
   ProgressData,
   SelectedImage,
@@ -43,6 +48,14 @@ export const result = writable<DoneData | null>(null);
 export const cancelPrompt = writable(false);
 export const toast = writable<{ kind: "ok" | "err"; text: string } | null>(null);
 
+// OS-download runtime state
+export const osCatalog = writable<OsCatalogEntry[]>([]);
+export const downloadStatus = writable<DownloadStatus | null>(null);
+export const downloadProgress = writable<DownloadProgressData | null>(null);
+export const downloadLog = writable<string[]>([]);
+export const downloadError = writable<ErrorData | null>(null);
+export const downloadActive = writable(false);
+
 export function resetFlashState(): void {
   flashStatus.set("idle");
   currentPhase.set("writing");
@@ -64,7 +77,6 @@ export async function startFlashAndRun(): Promise<void> {
   const image = get(selectedImage);
   const drive = get(selectedDrive);
   if (!image || !drive) return;
-
   flashStatus.set("running");
   currentPhase.set("writing");
   progress.set(null);
@@ -86,6 +98,58 @@ export async function startFlashAndRun(): Promise<void> {
     const err = toErrorData(e);
     if (!get(flashError)) flashError.set(err);
     flashStatus.set("error");
+  }
+}
+
+/**
+ * Download the official ISO for `osId` and select it as the wizard image.
+ * Mirrors the download://… events into the download stores; the returned
+ * outcome carries the verified local path used as the selected image.
+ */
+export async function startDownloadAndSelect(osId: string): Promise<void> {
+  downloadActive.set(true);
+  downloadStatus.set("resolving");
+  downloadProgress.set(null);
+  downloadLog.set([]);
+  downloadError.set(null);
+
+  try {
+    const outcome = await downloadIso(osId);
+    const name = outcome.name;
+    selectedImage.set({
+      path: outcome.path,
+      name,
+      size: outcome.size,
+      detection: {
+        kind: "raw",
+        compressed: false,
+        is_windows_iso: false,
+        file_size: outcome.size,
+        estimated_size: null,
+      },
+    });
+    downloadActive.set(false);
+    step.set("drive");
+  } catch (e) {
+    const err = toErrorData(e);
+    // Cancellation is a normal exit, not an error panel.
+    if (!/cancel/i.test(err.message)) {
+      downloadError.set(err);
+    }
+    downloadActive.set(false);
+    downloadStatus.set(null);
+  }
+}
+
+/**
+ * Load the static OS catalog once; keep the last answer on failure so a
+ * transient backend hiccup never empties the picker.
+ */
+export async function loadOsCatalog(): Promise<void> {
+  try {
+    osCatalog.set(await listOsCatalog());
+  } catch {
+    // Keep whatever we already have (possibly empty).
   }
 }
 
